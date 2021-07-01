@@ -1,6 +1,7 @@
 package cmhp
 
 import (
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -26,4 +27,31 @@ func FileWriteAsText(path string, data string) error {
 	os.MkdirAll(filepath.Dir(path), 0777)
 	err := ioutil.WriteFile(path, []byte(data), 0777)
 	return err
+}
+
+func FileList(path string) ([]fs.FileInfo, error) {
+	return ioutil.ReadDir(path)
+}
+
+func DirRemove(path string) error {
+	d, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		err = os.RemoveAll(filepath.Join(path, name))
+		if err != nil {
+			return err
+		}
+	}
+	err = os.Remove(path)
+	if err != nil {
+		return err
+	}
+	return nil
 }

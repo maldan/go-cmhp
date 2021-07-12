@@ -6,27 +6,45 @@ import (
 	"io"
 )
 
-func DataCompress(data []byte) []byte {
+func DataCompress(data []byte) ([]byte, error) {
 	inputFile := new(bytes.Buffer)
-	inputFile.Write(data)
+	_, err := inputFile.Write(data)
+	if err != nil {
+		return nil, err
+	}
 
 	outputFile := new(bytes.Buffer)
-	flateWriter, _ := flate.NewWriter(outputFile, flate.BestCompression)
+	flateWriter, err := flate.NewWriter(outputFile, flate.BestCompression)
+	if err != nil {
+		return nil, err
+	}
+
 	defer flateWriter.Close()
-	io.Copy(flateWriter, inputFile)
-	flateWriter.Flush()
-	return outputFile.Bytes()
+	_, err = io.Copy(flateWriter, inputFile)
+	if err != nil {
+		return nil, err
+	}
+
+	err = flateWriter.Flush()
+	if err != nil {
+		return nil, err
+	}
+
+	return outputFile.Bytes(), nil
 }
 
-func DataDecompress(data []byte) []byte {
+func DataDecompress(data []byte) ([]byte, error) {
 	inputFile := new(bytes.Buffer)
-	inputFile.Write(data)
+	_, err := inputFile.Write(data)
+	if err != nil {
+		return nil, err
+	}
+	flateReader := flate.NewReader(inputFile)
+	defer flateReader.Close()
 
 	outputFile := new(bytes.Buffer)
 
-	flateReader := flate.NewReader(inputFile)
-	flateReader.Close()
-
 	io.Copy(outputFile, flateReader)
-	return outputFile.Bytes()
+
+	return outputFile.Bytes(), nil
 }

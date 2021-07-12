@@ -5,6 +5,28 @@ import (
 	"sort"
 )
 
+func SliceIncludes(slice []interface{}, v interface{}) bool {
+	for i := 0; i < len(slice); i++ {
+		if slice[i] == v {
+			return true
+		}
+	}
+
+	return false
+}
+
+func SliceFindIndexR(slice interface{}, find func(interface{}) bool) int {
+	s := reflect.ValueOf(slice)
+
+	for i := 0; i < s.Len(); i++ {
+		if find(s.Index(i).Interface()) {
+			return i
+		}
+	}
+
+	return -1
+}
+
 func SliceFindR(slice interface{}, find func(interface{}) bool) (interface{}, int) {
 	s := reflect.ValueOf(slice)
 

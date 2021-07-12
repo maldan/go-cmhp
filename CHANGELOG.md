@@ -1,3 +1,16 @@
+## [0.0.6] - 2021-06-12
+
+### Fixed
+-    Compress error check
+-    Sha hash
+-    File read and write json
+-    Check file exists
+-    File delete, size, exists
+-    Dir delete
+-    Images
+-    Process create
+-    Slice includes, find index
+
 ## [0.0.5] - 2021-06-01
 
 ### Fixed

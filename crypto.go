@@ -19,7 +19,7 @@ func HashSha256(data string) string {
 func UID(size int) string {
 	a := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
 
-	var m runtime.MemStats
+	var m runtime.MemStats //
 	runtime.ReadMemStats(&m)
 	out := ""
 	t := time.Now().Unix() + int64(os.Getpid()) + int64(m.TotalAlloc+m.Alloc+m.Sys)

@@ -2,6 +2,7 @@ package cmhp
 
 import (
 	"crypto/rand"
+	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/base64"
 	"math/big"
@@ -9,6 +10,12 @@ import (
 	"runtime"
 	"time"
 )
+
+func HashSha1(data string) string {
+	hasher := sha1.New()
+	hasher.Write([]byte(data))
+	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+}
 
 func HashSha256(data string) string {
 	hasher := sha256.New()

@@ -34,5 +34,5 @@ func main() {
 	})
 	fmt.Println(z)
 
-	fmt.Println(cmhp.RequestGetAsText("https://api.github.com/repos/maldan/gamx/releases", nil))
+	// fmt.Println(cmhp.RequestGetAsText("https://api.github.com/repos/maldan/gamx/releases", nil))
 }

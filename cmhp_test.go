@@ -1,8 +1,14 @@
 package cmhp
 
-/*func TestAbs(t *testing.T) {
-	for i := 0; i < 1024; i++ {
-		fmt.Println(UID(8))
-	}
+import (
+	"fmt"
+	"testing"
+)
+
+func TestAbs(t *testing.T) {
+	x := Request(HttpArgs{
+		Url:    "https://yandex.ru",
+		Method: "GET",
+	})
+	fmt.Println(x.Body)
 }
-*/

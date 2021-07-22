@@ -35,4 +35,7 @@ func main() {
 	fmt.Println(z)
 
 	// fmt.Println(cmhp.RequestGetAsText("https://api.github.com/repos/maldan/gamx/releases", nil))
+
+	out := cmhp.ProcessExec("gam", "process", "list", "--format=json")
+	fmt.Println(out)
 }

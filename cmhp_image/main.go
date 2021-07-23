@@ -1,4 +1,4 @@
-package cmhp
+package cmhp_image
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-func ImageCompress(path string, quality int) ([]byte, error) {
+func Compress(path string, quality int) ([]byte, error) {
 	srcImage, err := imaging.Open(path, imaging.AutoOrientation(true))
 	if err != nil {
 		return nil, err
@@ -21,7 +21,7 @@ func ImageCompress(path string, quality int) ([]byte, error) {
 	return outputFile.Bytes(), nil
 }
 
-func ImageResolution(path string) (int, int, error) {
+func Resolution(path string) (int, int, error) {
 	srcImage, err := imaging.Open(path, imaging.AutoOrientation(true))
 	if err != nil {
 		return 0, 0, err
@@ -30,7 +30,7 @@ func ImageResolution(path string) (int, int, error) {
 	return srcImage.Bounds().Dx(), srcImage.Bounds().Dy(), nil
 }
 
-func ImageThumbnail(path string, width int, height int) ([]byte, error) {
+func Thumbnail(path string, width int, height int) ([]byte, error) {
 	srcImage, err := imaging.Open(path, imaging.AutoOrientation(true))
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func ImageThumbnail(path string, width int, height int) ([]byte, error) {
 	return outputFile.Bytes(), nil
 }
 
-func ImageResize(path string, width int, height int) ([]byte, error) {
+func Resize(path string, width int, height int) ([]byte, error) {
 	srcImage, err := imaging.Open(path, imaging.AutoOrientation(true))
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func ImageResize(path string, width int, height int) ([]byte, error) {
 	return outputFile.Bytes(), nil
 }
 
-func ImageCrop(path string, area [4]float64) ([]byte, error) {
+func Crop(path string, area [4]float64) ([]byte, error) {
 	srcImage, err := imaging.Open(path, imaging.AutoOrientation(true))
 	if err != nil {
 		return nil, err

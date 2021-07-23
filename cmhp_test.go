@@ -3,10 +3,12 @@ package cmhp
 import (
 	"fmt"
 	"testing"
+
+	"github.com/maldan/go-cmhp/cmhp_net"
 )
 
 func TestAbs(t *testing.T) {
-	x := Request(HttpArgs{
+	x := cmhp_net.Request(cmhp_net.HttpArgs{
 		Url:    "https://yandex.ru",
 		Method: "GET",
 	})

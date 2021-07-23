@@ -1,4 +1,4 @@
-package cmhp
+package cmhp_net
 
 import (
 	"bytes"
@@ -81,6 +81,7 @@ func Request(args HttpArgs) HttpResponse {
 	return response
 }
 
+/*
 func RequestGetBin(url string, headers map[string]string) HttpResponse {
 	response := HttpResponse{}
 
@@ -156,4 +157,4 @@ func RequestPostJSON(url string, headers map[string]string, v interface{}) HttpR
 	headers["Content-Type"] = "application/json"
 	response := RequestPostBin(url, headers, out)
 	return response
-}
+}*/

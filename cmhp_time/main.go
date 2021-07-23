@@ -1,11 +1,11 @@
-package cmhp
+package cmhp_time
 
 import (
 	"strings"
 	"time"
 )
 
-func TimeFormat(t time.Time, format string) string {
+func Format(t time.Time, format string) string {
 	format = strings.ReplaceAll(format, "YYYY", "2006")
 	format = strings.ReplaceAll(format, "MM", "01")
 	format = strings.ReplaceAll(format, "DD", "02")

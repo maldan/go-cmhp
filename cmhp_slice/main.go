@@ -1,11 +1,11 @@
-package cmhp
+package cmhp_slice
 
 import (
 	"reflect"
 	"sort"
 )
 
-func SliceIncludes(slice []interface{}, v interface{}) bool {
+func Includes(slice []interface{}, v interface{}) bool {
 	for i := 0; i < len(slice); i++ {
 		if slice[i] == v {
 			return true
@@ -15,7 +15,7 @@ func SliceIncludes(slice []interface{}, v interface{}) bool {
 	return false
 }
 
-func SliceFindIndexR(slice interface{}, find func(interface{}) bool) int {
+func FindIndexR(slice interface{}, find func(interface{}) bool) int {
 	s := reflect.ValueOf(slice)
 
 	for i := 0; i < s.Len(); i++ {
@@ -27,7 +27,7 @@ func SliceFindIndexR(slice interface{}, find func(interface{}) bool) int {
 	return -1
 }
 
-func SliceFindR(slice interface{}, find func(interface{}) bool) (interface{}, int) {
+func FindR(slice interface{}, find func(interface{}) bool) (interface{}, int) {
 	s := reflect.ValueOf(slice)
 
 	for i := 0; i < s.Len(); i++ {
@@ -39,7 +39,7 @@ func SliceFindR(slice interface{}, find func(interface{}) bool) (interface{}, in
 	return nil, -1
 }
 
-func SliceFilterR(slice interface{}, filter func(interface{}) bool) []interface{} {
+func FilterR(slice interface{}, filter func(interface{}) bool) []interface{} {
 	filtered := make([]interface{}, 0)
 
 	s := reflect.ValueOf(slice)
@@ -53,7 +53,7 @@ func SliceFilterR(slice interface{}, filter func(interface{}) bool) []interface{
 	return filtered
 }
 
-func SliceFilter(slice []interface{}, filter func(interface{}) bool) []interface{} {
+func Filter(slice []interface{}, filter func(interface{}) bool) []interface{} {
 	filtered := make([]interface{}, 0)
 
 	for _, v := range slice {
@@ -64,7 +64,7 @@ func SliceFilter(slice []interface{}, filter func(interface{}) bool) []interface
 	return filtered
 }
 
-func SliceMap(slice []interface{}, m func(interface{}) interface{}) []interface{} {
+func Map(slice []interface{}, m func(interface{}) interface{}) []interface{} {
 	mapped := make([]interface{}, 0)
 	for _, v := range slice {
 		mapped = append(mapped, m(v))
@@ -72,8 +72,8 @@ func SliceMap(slice []interface{}, m func(interface{}) interface{}) []interface{
 	return mapped
 }
 
-func SliceSort(slice []interface{}, s func(i, j int) bool) []interface{} {
-	copy := SliceFilter(slice, func(i interface{}) bool { return true })
+func Sort(slice []interface{}, s func(i, j int) bool) []interface{} {
+	copy := Filter(slice, func(i interface{}) bool { return true })
 	sort.SliceStable(copy, s)
 	return copy
 }

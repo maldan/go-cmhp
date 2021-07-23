@@ -1,4 +1,4 @@
-package cmhp
+package cmhp_crypto
 
 import (
 	"crypto/rand"
@@ -11,13 +11,13 @@ import (
 	"time"
 )
 
-func HashSha1(data string) string {
+func Sha1(data string) string {
 	hasher := sha1.New()
 	hasher.Write([]byte(data))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 }
 
-func HashSha256(data string) string {
+func Sha256(data string) string {
 	hasher := sha256.New()
 	hasher.Write([]byte(data))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))

@@ -1,4 +1,4 @@
-package cmhp
+package cmhp_file
 
 import (
 	"encoding/json"
@@ -9,17 +9,17 @@ import (
 	"path/filepath"
 )
 
-func FileReadAsBin(path string) ([]byte, error) {
+func ReadBin(path string) ([]byte, error) {
 	data, err := ioutil.ReadFile(path)
 	return data, err
 }
 
-func FileReadAsText(path string) (string, error) {
+func ReadText(path string) (string, error) {
 	data, err := ioutil.ReadFile(path)
 	return string(data), err
 }
 
-func FileReadAsJSON(path string, v interface{}) error {
+func ReadJSON(path string, v interface{}) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -28,19 +28,19 @@ func FileReadAsJSON(path string, v interface{}) error {
 	return err
 }
 
-func FileWriteAsBin(path string, data []byte) error {
+func WriteBin(path string, data []byte) error {
 	os.MkdirAll(filepath.Dir(path), 0777)
 	err := ioutil.WriteFile(path, data, 0777)
 	return err
 }
 
-func FileWriteAsText(path string, data string) error {
+func WriteText(path string, data string) error {
 	os.MkdirAll(filepath.Dir(path), 0777)
 	err := ioutil.WriteFile(path, []byte(data), 0777)
 	return err
 }
 
-func FileWriteAsJSON(path string, v interface{}) error {
+func WriteJSON(path string, v interface{}) error {
 	err := os.MkdirAll(filepath.Dir(path), 0777)
 	if err != nil {
 		return err
@@ -54,18 +54,18 @@ func FileWriteAsJSON(path string, v interface{}) error {
 	return err
 }
 
-func FileList(path string) ([]fs.FileInfo, error) {
+func List(path string) ([]fs.FileInfo, error) {
 	return ioutil.ReadDir(path)
 }
 
-func FileExists(path string) bool {
+func Exists(path string) bool {
 	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
 		return false
 	}
 	return true
 }
 
-func FileDelete(path string) error {
+func Delete(path string) error {
 	err := os.Remove(path)
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func FileDelete(path string) error {
 	return nil
 }
 
-func FileSize(path string) int64 {
+func Size(path string) int64 {
 	stat, err := os.Stat(path)
 	if err != nil {
 		return 0
@@ -81,7 +81,7 @@ func FileSize(path string) int64 {
 	return stat.Size()
 }
 
-func DirDelete(path string) error {
+func DeleteDir(path string) error {
 	d, err := os.Open(path)
 	if err != nil {
 		return err

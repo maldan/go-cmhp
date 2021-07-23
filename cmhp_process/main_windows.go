@@ -1,4 +1,4 @@
-package cmhp
+package cmhp_process
 
 import (
 	"os/exec"
@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-func ProcessExec(args ...string) string {
+func Exec(args ...string) string {
 	c, b := exec.Command(args[0], args[1:]...), new(strings.Builder)
 	c.Stdout = b
 	c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -14,7 +14,7 @@ func ProcessExec(args ...string) string {
 	return b.String()
 }
 
-func ProcessCreate(args ...string) (*exec.Cmd, *strings.Builder) {
+func Create(args ...string) (*exec.Cmd, *strings.Builder) {
 	c, b := exec.Command(args[0], args[1:]...), new(strings.Builder)
 	c.Stdout = b
 	c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}

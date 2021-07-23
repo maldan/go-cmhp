@@ -1,4 +1,4 @@
-package cmhp
+package cmhp_compress
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-func DataCompress(data []byte) ([]byte, error) {
+func Deflate(data []byte) ([]byte, error) {
 	inputFile := new(bytes.Buffer)
 	_, err := inputFile.Write(data)
 	if err != nil {
@@ -33,7 +33,7 @@ func DataCompress(data []byte) ([]byte, error) {
 	return outputFile.Bytes(), nil
 }
 
-func DataDecompress(data []byte) ([]byte, error) {
+func Inflate(data []byte) ([]byte, error) {
 	inputFile := new(bytes.Buffer)
 	_, err := inputFile.Write(data)
 	if err != nil {

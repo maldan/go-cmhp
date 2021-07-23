@@ -1,6 +1,6 @@
 {
   "name": "@maldan/go-cmhp",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Go Common Helper",
   "main": "index.js",
   "keywords": [],

@@ -12,5 +12,5 @@ func TestAbs(t *testing.T) {
 		Url:    "https://yandex.ru",
 		Method: "GET",
 	})
-	fmt.Println(x.Body)
+	fmt.Println(x.Body) //
 }

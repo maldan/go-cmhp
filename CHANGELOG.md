@@ -1,3 +1,11 @@
+## [0.0.15] - 2021-07-05
+
+### Fixed
+-    S3 support
+-    Thumbnail image
+-    Convert
+-    Other
+
 ## [0.0.14] - 2021-06-23
 
 ### Fixed

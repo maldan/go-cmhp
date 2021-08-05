@@ -2,8 +2,10 @@ package cmhp_image
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"image/jpeg"
+	"image/png"
 
 	"github.com/disintegration/imaging"
 )
@@ -30,7 +32,7 @@ func Resolution(path string) (int, int, error) {
 	return srcImage.Bounds().Dx(), srcImage.Bounds().Dy(), nil
 }
 
-func Thumbnail(path string, width int, height int) ([]byte, error) {
+func Thumbnail(path string, width int, height int, format string) ([]byte, error) {
 	srcImage, err := imaging.Open(path, imaging.AutoOrientation(true))
 	if err != nil {
 		return nil, err
@@ -38,7 +40,15 @@ func Thumbnail(path string, width int, height int) ([]byte, error) {
 
 	thumbnail := imaging.Thumbnail(srcImage, width, height, imaging.Lanczos)
 	outputFile := new(bytes.Buffer)
-	jpeg.Encode(outputFile, thumbnail, nil)
+
+	if format == "png" {
+		png.Encode(outputFile, thumbnail)
+	} else if format == "jpg" || format == "jpeg" {
+		jpeg.Encode(outputFile, thumbnail, nil)
+	} else {
+		return nil, errors.New("unsupported format")
+	}
+
 	return outputFile.Bytes(), nil
 }
 

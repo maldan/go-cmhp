@@ -2,9 +2,11 @@ package cmhp_net
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 type HttpResponse struct {
@@ -17,6 +19,7 @@ type HttpArgs struct {
 	Url     string
 	Headers map[string]string
 	Method  string
+	Proxy   string
 
 	InputData  []byte
 	InputJSON  interface{}
@@ -26,8 +29,19 @@ type HttpArgs struct {
 func Request(args HttpArgs) HttpResponse {
 	response := HttpResponse{}
 
-	// Create request
+	// Create client
 	client := &http.Client{}
+
+	// Set proxy
+	if args.Proxy != "" {
+		proxyUrl, _ := url.Parse(args.Proxy)
+		client.Transport = &http.Transport{
+			Proxy:           http.ProxyURL(proxyUrl),
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
+	// Create request
 	var req *http.Request
 	if args.Method == "POST" {
 		if args.InputJSON != nil {

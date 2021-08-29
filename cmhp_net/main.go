@@ -10,13 +10,13 @@ import (
 type HttpResponse struct {
 	StatusCode int    `json:"statusCode"`
 	Body       []byte `json:"body"`
+	Error      error  `json:"error"`
 }
 
 type HttpArgs struct {
 	Url     string
 	Headers map[string]string
 	Method  string
-	// Params  map[string]interface{}
 
 	InputData  []byte
 	InputJSON  interface{}
@@ -34,12 +34,14 @@ func Request(args HttpArgs) HttpResponse {
 			out, _ := json.Marshal(args.InputJSON)
 			r, err := http.NewRequest(args.Method, args.Url, bytes.NewBuffer(out))
 			if err != nil {
+				response.Error = err
 				return response
 			}
 			req = r
 		} else {
 			r, err := http.NewRequest(args.Method, args.Url, bytes.NewBuffer(args.InputData))
 			if err != nil {
+				response.Error = err
 				return response
 			}
 			req = r
@@ -47,6 +49,7 @@ func Request(args HttpArgs) HttpResponse {
 	} else {
 		r, err := http.NewRequest(args.Method, args.Url, nil)
 		if err != nil {
+			response.Error = err
 			return response
 		}
 		req = r
@@ -66,6 +69,7 @@ func Request(args HttpArgs) HttpResponse {
 	// Do request
 	resp, err := client.Do(req)
 	if err != nil {
+		response.Error = err
 		return response
 	}
 
@@ -73,6 +77,7 @@ func Request(args HttpArgs) HttpResponse {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		response.Error = err
 		return response
 	}
 

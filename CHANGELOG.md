@@ -1,3 +1,10 @@
+## [0.0.18] - 2021-08-03
+
+### Fixed
+-    S3 file list
+-    Regex replace
+-    RandomCode
+
 ## [0.0.17] - 2021-07-29
 
 ### Fixed

@@ -48,7 +48,6 @@ func Start(path string) {
 		log.Fatal(err)
 	}
 	s3Client = s3.New(newSession)
-	log.Println("S3 is ready")
 }
 
 func List(path string) []S3File {

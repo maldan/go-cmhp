@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -29,6 +30,12 @@ type WriteArgs struct {
 	MetaData    map[string]string
 }
 
+type S3File struct {
+	Path         string
+	Size         int64
+	LastModified time.Time
+}
+
 func Start(path string) {
 	cmhp_file.ReadJSON(path, &config)
 
@@ -44,14 +51,19 @@ func Start(path string) {
 	log.Println("S3 is ready")
 }
 
-func List(path string) []string {
+func List(path string) []S3File {
 	list, _ := s3Client.ListObjects(&s3.ListObjectsInput{
 		Bucket: aws.String(config.SPACES_BUCKET),
 		Prefix: aws.String(path),
 	})
-	out := make([]string, 0)
+	out := make([]S3File, 0)
 	for _, o := range list.Contents {
-		out = append(out, *o.Key)
+
+		out = append(out, S3File{
+			Path:         *o.Key,
+			Size:         *o.Size,
+			LastModified: *o.LastModified,
+		})
 	}
 	return out
 }

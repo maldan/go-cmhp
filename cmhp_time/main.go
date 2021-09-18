@@ -14,3 +14,7 @@ func Format(t time.Time, format string) string {
 	format = strings.ReplaceAll(format, "ss", "05")
 	return t.Format(format)
 }
+
+func Today() string {
+	return Format(time.Now(), "YYYY-MM-DD")
+}

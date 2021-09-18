@@ -15,6 +15,18 @@ func Includes(slice []interface{}, v interface{}) bool {
 	return false
 }
 
+func IncludesR(slice interface{}, v interface{}) bool {
+	s := reflect.ValueOf(slice)
+
+	for i := 0; i < s.Len(); i++ {
+		if s.Index(i).Interface() == v {
+			return true
+		}
+	}
+
+	return false
+}
+
 func FindIndexR(slice interface{}, find func(interface{}) bool) int {
 	s := reflect.ValueOf(slice)
 

@@ -5,12 +5,18 @@ import (
 	"strings"
 )
 
-func Exec(args ...string) string {
+func Exec(args ...string) (string, error) {
 	c, b := exec.Command(args[0], args[1:]...), new(strings.Builder)
 	c.Stdout = b
-	c.Run()
-	c.Process.Release()
-	return b.String()
+	err := c.Run()
+	if err != nil {
+		return "", err
+	}
+	err = c.Process.Release()
+	if err != nil {
+		return "", err
+	}
+	return b.String(), nil
 }
 
 func Create(args ...string) (*exec.Cmd, *strings.Builder) {

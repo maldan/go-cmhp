@@ -3,12 +3,28 @@ package cmhp_image
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"image/png"
+	"os"
+	"path"
 
 	"github.com/disintegration/imaging"
+	"github.com/maldan/go-cmhp/cmhp_crypto"
+	"github.com/maldan/go-cmhp/cmhp_file"
+	"github.com/maldan/go-cmhp/cmhp_process"
 )
+
+type MagickArgs struct {
+	Quality    int
+	Width      int
+	Height     int
+	Format     string
+	InputPath  string
+	InputData  []byte
+	OutputPath string
+}
 
 func Compress(path string, quality int) ([]byte, error) {
 	srcImage, err := imaging.Open(path, imaging.AutoOrientation(true))
@@ -79,4 +95,52 @@ func Crop(path string, area [4]float64) ([]byte, error) {
 	outputFile := new(bytes.Buffer)
 	jpeg.Encode(outputFile, thumbnail, nil)
 	return outputFile.Bytes(), nil
+}
+
+func Magick(args MagickArgs) (string, error) {
+	// Create temp file
+	tempFile := os.TempDir() + "/" + cmhp_crypto.UID(10)
+	if args.OutputPath == "" {
+		args.OutputPath = tempFile
+		if args.Format == "" {
+			args.OutputPath += ".jpeg"
+		} else {
+			args.OutputPath += "." + args.Format
+		}
+	}
+
+	// Use data insted of path
+	if len(args.InputData) > 0 {
+		args.InputPath = os.TempDir() + "/" + cmhp_crypto.UID(10)
+		cmhp_file.WriteBin(args.InputPath, args.InputData)
+		defer cmhp_file.Delete(args.InputPath)
+	}
+
+	// Prepare args
+	params := make([]string, 0)
+	params = append(params, "magick", args.InputPath)
+
+	// Set quality
+	if args.Quality > 0 {
+		params = append(params, "-quality", fmt.Sprintf("%v", args.Quality))
+	}
+
+	// Set size
+	if args.Width > 0 && args.Height > 0 {
+		params = append(params,
+			"-thumbnail", fmt.Sprintf("%vx%v^", args.Width, args.Height),
+			"-gravity", "center",
+			"-extent", fmt.Sprintf("%vx%v", args.Width, args.Height),
+		)
+	}
+
+	// Set output
+	params = append(params, args.OutputPath)
+
+	// Prepare dir
+	os.MkdirAll(path.Dir(args.OutputPath), 0777)
+
+	// Process image
+	_, err := cmhp_process.Exec(params...)
+	return args.OutputPath, err
 }

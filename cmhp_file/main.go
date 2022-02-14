@@ -15,6 +15,10 @@ import (
 	"path/filepath"
 )
 
+type Data interface {
+	string | []byte
+}
+
 func ReadBin(path string) ([]byte, error) {
 	data, err := ioutil.ReadFile(path)
 	return data, err
@@ -34,6 +38,7 @@ func ReadJSON(path string, v interface{}) error {
 	return err
 }
 
+/*
 func WriteBin(path string, data []byte) error {
 	os.MkdirAll(filepath.Dir(path), 0777)
 	err := ioutil.WriteFile(path, data, 0777)
@@ -59,9 +64,68 @@ func WriteJSON(path string, v interface{}) error {
 	err = ioutil.WriteFile(path, []byte(data), 0777)
 	return err
 }
+*/
+
+// Write bytes, text or struct as json to file
+func Write(path string, data interface{}) error {
+	// Create path for file
+	err := os.MkdirAll(filepath.Dir(path), 0777)
+	if err != nil {
+		return err
+	}
+
+	switch data.(type) {
+	case string:
+		if err = ioutil.WriteFile(path, []byte(data.(string)), 0777); err != nil {
+			return err
+		}
+	case []byte:
+		if err = ioutil.WriteFile(path, data.([]byte), 0777); err != nil {
+			return err
+		}
+	default:
+		// Write as json
+		data, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		err = ioutil.WriteFile(path, data, 0777)
+	}
+
+	return nil
+}
+
+// Append bytes or text to file
+func Append(path string, data interface{}) error {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	switch data.(type) {
+	case string:
+		if _, err = f.WriteString(data.(string)); err != nil {
+			return err
+		}
+	case []byte:
+		if _, err = f.Write(data.([]byte)); err != nil {
+			return err
+		}
+	default:
+		panic("Unknown type")
+	}
+
+	return nil
+}
 
 func List(path string) ([]fs.FileInfo, error) {
 	return ioutil.ReadDir(path)
+}
+
+func Info(path string) (fs.FileInfo, error) {
+	stat, err := os.Stat(path)
+	return stat, err
 }
 
 func Exists(path string) bool {

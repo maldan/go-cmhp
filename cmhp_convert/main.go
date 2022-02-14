@@ -10,6 +10,11 @@ func StrToInt(s string) int {
 	return n
 }
 
+func StrToFloat(s string) float64 {
+	n, _ := strconv.ParseFloat(s, 64)
+	return n
+}
+
 func IntToStr(i int) string {
 	return strconv.Itoa(i)
 }

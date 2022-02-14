@@ -14,6 +14,7 @@ func AllowCommon(str string) string {
 	}, str)
 }
 
+// S
 func Allow(str string, allowList string) string {
 	return strings.Map(func(r rune) rune {
 		if strings.ContainsRune(allowList, r) {

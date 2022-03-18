@@ -38,34 +38,6 @@ func ReadJSON(path string, v interface{}) error {
 	return err
 }
 
-/*
-func WriteBin(path string, data []byte) error {
-	os.MkdirAll(filepath.Dir(path), 0777)
-	err := ioutil.WriteFile(path, data, 0777)
-	return err
-}
-
-func WriteText(path string, data string) error {
-	os.MkdirAll(filepath.Dir(path), 0777)
-	err := ioutil.WriteFile(path, []byte(data), 0777)
-	return err
-}
-
-func WriteJSON(path string, v interface{}) error {
-	err := os.MkdirAll(filepath.Dir(path), 0777)
-	if err != nil {
-		return err
-	}
-
-	data, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(path, []byte(data), 0777)
-	return err
-}
-*/
-
 // Write bytes, text or struct as json to file
 func Write(path string, data interface{}) error {
 	// Create path for file
@@ -126,6 +98,25 @@ func List(path string) ([]fs.FileInfo, error) {
 func Info(path string) (fs.FileInfo, error) {
 	stat, err := os.Stat(path)
 	return stat, err
+}
+
+func Copy(from string, to string) error {
+	source, err := os.Open(from)
+	if err != nil {
+		return err
+	}
+	defer source.Close()
+
+	// Prepare dir
+	os.MkdirAll(filepath.Dir(to), 0777)
+
+	destination, err := os.Create(to)
+	if err != nil {
+		return err
+	}
+	defer destination.Close()
+	_, err = io.Copy(destination, source)
+	return err
 }
 
 func Exists(path string) bool {

@@ -55,3 +55,67 @@ func TestWriteAndReadString(t *testing.T) {
 		t.Errorf("Incorrect value")
 	}
 }
+
+func TestIsEnd(t *testing.T) {
+	ba := cmhp_data.Allocate(0, true)
+	ba.WriteUInt32(32)
+	ba.Position = 0
+	if ba.IsEnd() {
+		t.Errorf("Incorrect value")
+	}
+	ba.ReadUint32()
+	if !ba.IsEnd() {
+		t.Errorf("Incorrect value")
+	}
+
+	ba.Position = 0
+	ba.ReadUint8()
+	ba.ReadUint8()
+	ba.ReadUint8()
+	if ba.IsEnd() {
+		t.Errorf("Incorrect value")
+	}
+	ba.ReadUint8()
+	if !ba.IsEnd() {
+		t.Errorf("Incorrect value")
+	}
+}
+
+func TestFloat32(t *testing.T) {
+	ba := cmhp_data.Allocate(0, true)
+	ba.WriteFloat32(32.32)
+	ba.Position = 0
+	if ba.ReadFloat32() != 32.32 {
+		t.Errorf("Incorrect value")
+	}
+}
+
+func TestSection(t *testing.T) {
+	ba := cmhp_data.Allocate(0, true)
+
+	a := cmhp_data.Allocate(4, true)
+	a.WriteUInt32(1)
+	b := cmhp_data.Allocate(4, true)
+	b.WriteUInt32(1)
+
+	ba.WriteSection(1234, "X", a)
+	ba.WriteSection(1234, "Y", b)
+	ba.Position = 0
+
+	s1, ss1, _ := ba.ReadSection(1234)
+	s2, ss2, _ := ba.ReadSection(1234)
+
+	if s1 != "X" {
+		t.Errorf("Incorrect value")
+	}
+	if s2 != "Y" {
+		t.Errorf("Incorrect value")
+	}
+
+	if ss1.Length != 4 {
+		t.Errorf("Incorrect value")
+	}
+	if ss2.Length != 4 {
+		t.Errorf("Incorrect value")
+	}
+}

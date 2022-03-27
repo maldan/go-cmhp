@@ -1,7 +1,10 @@
 package cmhp_data
 
 import (
+	"encoding/binary"
+	"errors"
 	"fmt"
+	"github.com/maldan/go-cmhp/cmhp_file"
 	"math"
 )
 
@@ -16,6 +19,15 @@ type ByteArray struct {
 func Allocate(size uint64, isLE bool) *ByteArray {
 	ba := ByteArray{Capacity: size, Data: make([]byte, size), IsLittleEndian: isLE}
 	return &ba
+}
+
+func FromFile(path string, isLE bool) (*ByteArray, error) {
+	data, err := cmhp_file.ReadBin(path)
+	if err != nil {
+		return nil, err
+	}
+	ba := ByteArray{Capacity: uint64(len(data)), Length: uint64(len(data)), Data: data, IsLittleEndian: isLE}
+	return &ba, nil
 }
 
 func (b *ByteArray) WriteUInt8(value uint8) {
@@ -89,6 +101,27 @@ func (b *ByteArray) WriteFloat32(value float32) {
 	}
 }
 
+func (b *ByteArray) WriteSection(marker uint32, name string, arr *ByteArray) {
+	b.WriteUInt32(marker)
+	b.WriteUTF8(name)
+
+	// Data with length
+	b.WriteUInt32(uint32(arr.Length))
+	for i := 0; i < int(arr.Length); i++ {
+		b.WriteUInt8(arr.Data[i])
+	}
+}
+
+func (b *ByteArray) ReadFloat32() float32 {
+	bytes := make([]byte, 4)
+	bytes[0] = b.ReadUint8()
+	bytes[1] = b.ReadUint8()
+	bytes[2] = b.ReadUint8()
+	bytes[3] = b.ReadUint8()
+	bits := binary.LittleEndian.Uint32(bytes)
+	return math.Float32frombits(bits)
+}
+
 func (b *ByteArray) ReadUint8() uint8 {
 	b.Position += 1
 	return b.Data[b.Position-1]
@@ -130,6 +163,25 @@ func (b *ByteArray) Read(amount uint64) []byte {
 	return data
 }
 
+func (b *ByteArray) ReadSection(marker uint32) (string, *ByteArray, error) {
+	// Read header
+	m := b.ReadUint32()
+	if m != marker {
+		return "", nil, errors.New("unknown marker symbol")
+	}
+	name := b.ReadUTF8()
+	size := b.ReadUint32()
+
+	// Read data
+	b2 := Allocate(0, b.IsLittleEndian)
+	for i := 0; i < int(size); i++ {
+		b2.WriteUInt8(b.ReadUint8())
+	}
+	b2.Position = 0
+
+	return name, b2, nil
+}
+
 func (b *ByteArray) Grow(amount uint64) {
 	newArray := make([]byte, b.Capacity+amount)
 	for i := 0; i < int(b.Length); i++ {
@@ -144,4 +196,8 @@ func (b *ByteArray) Print() {
 		fmt.Printf("%02X ", b.Data[i])
 	}
 	fmt.Printf("\n")
+}
+
+func (b *ByteArray) IsEnd() bool {
+	return b.Position >= b.Length
 }

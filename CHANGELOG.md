@@ -1,3 +1,9 @@
+## [0.0.22] - 2022-02-27
+
+### Fixed
+-    ByteArray
+-    Pretty Print
+
 ## [0.0.21] - 2022-01-14
 
 ### Fixed

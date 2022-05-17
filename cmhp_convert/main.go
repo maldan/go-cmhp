@@ -1,6 +1,7 @@
 package cmhp_convert
 
 import (
+	b64 "encoding/base64"
 	"strconv"
 	"sync"
 )
@@ -34,4 +35,20 @@ func SyncMapToMap(sm sync.Map) map[interface{}]interface{} {
 		return true
 	})
 	return m
+}
+
+func ToBase64(v interface{}) string {
+	switch v.(type) {
+	case string:
+		enc := b64.URLEncoding.EncodeToString([]byte(v.(string)))
+		return enc
+	default:
+		return ""
+	}
+	return ""
+}
+
+func FromBase64(v string) []byte {
+	uDec, _ := b64.URLEncoding.DecodeString(v)
+	return uDec
 }

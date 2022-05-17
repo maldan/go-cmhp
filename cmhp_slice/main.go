@@ -1,5 +1,10 @@
 package cmhp_slice
 
+import (
+	"math/rand"
+	"time"
+)
+
 func Includes[T comparable](slice []T, v T) bool {
 	for i := 0; i < len(slice); i++ {
 		if slice[i] == v {
@@ -51,4 +56,10 @@ func Map[T any, R any](slice []T, m func(T) R) []R {
 		mapped = append(mapped, m(v))
 	}
 	return mapped
+}
+
+var r = rand.New(rand.NewSource(time.Now().Unix()))
+
+func PickRandom[T any](slice []T) T {
+	return slice[r.Intn(len(slice))]
 }

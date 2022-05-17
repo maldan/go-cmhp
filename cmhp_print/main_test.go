@@ -28,7 +28,6 @@ type A struct {
 }
 
 func TestA(t *testing.T) {
-
 	a := A{}
 
 	cmhp_print.Print(a)

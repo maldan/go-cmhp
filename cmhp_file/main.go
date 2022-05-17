@@ -8,15 +8,24 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/maldan/go-cmhp/cmhp_crypto"
 	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Data interface {
 	string | []byte
+}
+
+type FileInfo struct {
+	FullPath string
+	Name     string
+	Dir      string
 }
 
 func ReadBin(path string) ([]byte, error) {
@@ -67,6 +76,20 @@ func Write(path string, data interface{}) error {
 	return nil
 }
 
+func WriteTemp(prefix string, data interface{}) (string, error) {
+	tmpPath := fmt.Sprintf("%v/%v/%v",
+		strings.ReplaceAll(os.TempDir(), "\\", "/"),
+		prefix,
+		cmhp_crypto.UID(24),
+	)
+	tmpPath = strings.ReplaceAll(tmpPath, "//", "/")
+	err := Write(tmpPath, data)
+	if err != nil {
+		return "", err
+	}
+	return tmpPath, nil
+}
+
 // Append bytes or text to file
 func Append(path string, data interface{}) error {
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
@@ -93,6 +116,37 @@ func Append(path string, data interface{}) error {
 
 func List(path string) ([]fs.FileInfo, error) {
 	return ioutil.ReadDir(path)
+}
+
+func ListAll(path string) ([]FileInfo, error) {
+	list := make([]FileInfo, 0)
+
+	err := filepath.Walk(path,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			// Skip dir
+			if info.IsDir() {
+				return nil
+			}
+
+			absPath, _ := filepath.Abs(path)
+			absPath = strings.ReplaceAll(absPath, "\\", "/")
+			list = append(list, FileInfo{
+				FullPath: absPath,
+				Dir:      strings.ReplaceAll(filepath.Dir(absPath), "\\", "/"),
+				Name:     info.Name(),
+			})
+
+			return nil
+		})
+	if err != nil {
+		return list, err
+	}
+
+	return list, nil
 }
 
 func Info(path string) (fs.FileInfo, error) {

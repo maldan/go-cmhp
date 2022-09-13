@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// Deflate Compress data
 func Deflate(data []byte) ([]byte, error) {
 	inputFile := new(bytes.Buffer)
 	_, err := inputFile.Write(data)
@@ -33,6 +34,7 @@ func Deflate(data []byte) ([]byte, error) {
 	return outputFile.Bytes(), nil
 }
 
+// Inflate Decompress data
 func Inflate(data []byte) ([]byte, error) {
 	inputFile := new(bytes.Buffer)
 	_, err := inputFile.Write(data)

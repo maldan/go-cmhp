@@ -18,3 +18,15 @@ func Format(t time.Time, format string) string {
 func Today() string {
 	return Format(time.Now(), "YYYY-MM-DD")
 }
+
+func MonthDateList(month time.Time) []time.Time {
+	l := make([]time.Time, 0)
+	start := time.Date(month.Year(), month.Month(), 0, 0, 0, 0, 0, month.Location())
+	for i := 0; i < 32; i++ {
+		current := start.Add(time.Hour * 24 * time.Duration(i))
+		if current.Month() == month.Month() {
+			l = append(l, current)
+		}
+	}
+	return l
+}

@@ -30,6 +30,19 @@ func TestFilter(t *testing.T) {
 	}
 }
 
+func TestGetRange(t *testing.T) {
+	newArray := []int{1, 2, 3, 4, 5}
+	finalArray := cmhp_slice.GetRange(newArray, 1, 2)
+	if len(finalArray) != 2 {
+		t.Error("Fuck range")
+	}
+
+	finalArray = cmhp_slice.GetRange(newArray, 1, 10)
+	if len(finalArray) != 4 {
+		t.Error("Fuck range")
+	}
+}
+
 func TestMap(t *testing.T) {
 	newArray := []int{1, 2, 3, 4, 5}
 	finalArray := cmhp_slice.Map(newArray, func(t int) string {
@@ -49,11 +62,11 @@ func BenchmarkOne(b *testing.B) {
 	}
 }
 
-func BenchmarkTwo(b *testing.B) {
+/*func BenchmarkTwo(b *testing.B) {
 	newArray := []int{1, 2, 3, 4, 5}
 	for i := 0; i < b.N; i++ {
 		cmhp_slice.FilterR(newArray, func(t interface{}) bool {
 			return t.(int) > 3
 		})
 	}
-}
+}*/

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/maldan/go-cmhp/cmhp_compress"
 	"github.com/maldan/go-cmhp/cmhp_crypto"
 	"io"
 	"io/fs"
@@ -47,6 +48,20 @@ func ReadJSON(path string, v interface{}) error {
 	return err
 }
 
+func ReadCompressedJSON(path string, v interface{}) error {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	cdata, err := cmhp_compress.Inflate(data)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(cdata, v)
+	return err
+}
+
 // Write bytes, text or struct as json to file
 func Write(path string, data interface{}) error {
 	// Create path for file
@@ -71,6 +86,47 @@ func Write(path string, data interface{}) error {
 			return err
 		}
 		err = ioutil.WriteFile(path, data, 0777)
+	}
+
+	return nil
+}
+
+// WriteCompressed bytes, text or struct as json to file and compress it
+func WriteCompressed(path string, data interface{}) error {
+	// Create path for file
+	err := os.MkdirAll(filepath.Dir(path), 0777)
+	if err != nil {
+		return err
+	}
+
+	switch data.(type) {
+	case string:
+		cdata, err := cmhp_compress.Deflate([]byte(data.(string)))
+		if err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(path, cdata, 0777); err != nil {
+			return err
+		}
+	case []byte:
+		cdata, err := cmhp_compress.Deflate(data.([]byte))
+		if err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(path, cdata, 0777); err != nil {
+			return err
+		}
+	default:
+		// Write as json
+		data, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		cdata, err := cmhp_compress.Deflate(data)
+		if err != nil {
+			return err
+		}
+		err = ioutil.WriteFile(path, cdata, 0777)
 	}
 
 	return nil
@@ -114,8 +170,38 @@ func Append(path string, data interface{}) error {
 	return nil
 }
 
-func List(path string) ([]fs.FileInfo, error) {
-	return ioutil.ReadDir(path)
+func ReadJSONList[T any](path string) ([]T, error) {
+	list, err := List(path)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]T, 0)
+	for _, f := range list {
+		t := new(T)
+		ReadJSON(f.FullPath, &t)
+		out = append(out, *t)
+	}
+	return out, nil
+}
+
+func List(path string) ([]FileInfo, error) {
+	list, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]FileInfo, 0)
+	for _, f := range list {
+		absPath, _ := filepath.Abs(path + "/" + f.Name())
+		absPath = strings.ReplaceAll(absPath, "\\", "/")
+
+		out = append(out, FileInfo{
+			FullPath: absPath,
+			Dir:      strings.ReplaceAll(filepath.Dir(absPath), "\\", "/"),
+			Name:     f.Name(),
+		})
+	}
+	return out, nil
 }
 
 func ListAll(path string) ([]FileInfo, error) {
@@ -273,4 +359,13 @@ func HashMd5(path string) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
+func BuildJSONIndex[T any](path string, outPath string) error {
+	list, err := ReadJSONList[T](path)
+	if err != nil {
+		return err
+	}
+	err = Write(outPath, &list)
+	return err
 }

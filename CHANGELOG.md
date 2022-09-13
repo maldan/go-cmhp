@@ -1,3 +1,11 @@
+## [0.0.23] - 2022-04-17
+
+### Fixed
+-    Pick random
+-    WriteTemp
+-    List all
+-    Base64 encode/decode
+
 ## [0.0.22] - 2022-02-27
 
 ### Fixed

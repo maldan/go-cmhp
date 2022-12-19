@@ -41,19 +41,21 @@ func Request(args HttpArgs) HttpResponse {
 		}
 	}
 
+	newUrl := args.Url
+
 	// Create request
 	var req *http.Request
 	if args.Method == "POST" {
 		if args.InputJSON != nil {
 			out, _ := json.Marshal(args.InputJSON)
-			r, err := http.NewRequest(args.Method, args.Url, bytes.NewBuffer(out))
+			r, err := http.NewRequest(args.Method, newUrl, bytes.NewBuffer(out))
 			if err != nil {
 				response.Error = err
 				return response
 			}
 			req = r
 		} else {
-			r, err := http.NewRequest(args.Method, args.Url, bytes.NewBuffer(args.InputData))
+			r, err := http.NewRequest(args.Method, newUrl, bytes.NewBuffer(args.InputData))
 			if err != nil {
 				response.Error = err
 				return response
@@ -61,7 +63,7 @@ func Request(args HttpArgs) HttpResponse {
 			req = r
 		}
 	} else {
-		r, err := http.NewRequest(args.Method, args.Url, nil)
+		r, err := http.NewRequest(args.Method, newUrl, nil)
 		if err != nil {
 			response.Error = err
 			return response

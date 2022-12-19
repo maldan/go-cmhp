@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"math/big"
 	"os"
 	"runtime"
@@ -33,7 +34,9 @@ func Sha1(data interface{}) string {
 		hasher.Write([]byte(data.(string)))
 		return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	default:
-		panic("Unsupported type")
+		bb, _ := json.Marshal(data)
+		hasher.Write(bb)
+		return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	}
 }
 

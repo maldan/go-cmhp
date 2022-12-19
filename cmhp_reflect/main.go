@@ -12,6 +12,11 @@ func SetField(s interface{}, name string, v interface{}) {
 	}
 }
 
+func GetFieldValue(s interface{}, name string) any {
+	f := reflect.ValueOf(s).Elem().FieldByName(name)
+	return reflect.ValueOf(f).Interface()
+}
+
 func StructToMap(s any) map[string]any {
 	var mp map[string]any
 	j, _ := json.Marshal(s)
@@ -23,3 +28,12 @@ func CopyMapToStruct(m map[string]any, v interface{}) {
 	out, _ := json.Marshal(m)
 	json.Unmarshal(out, v)
 }
+
+/*func GetTag(s interface{}, fieldName string, tagName string) string {
+	field, ok := reflect.TypeOf(s).FieldByName(fieldName)
+	fmt.Printf("%v\n", fieldName)
+	if ok {
+		return fmt.Sprintf("%v", field.Tag)
+	}
+	return ""
+}*/

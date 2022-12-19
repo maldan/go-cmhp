@@ -43,6 +43,21 @@ func Unique[T comparable](slice []T) []T {
 	return list
 }
 
+func UniqueBy[T comparable](slice []T, fn func(T) any) []T {
+	keys := make(map[any]T)
+	list := make([]T, 0)
+
+	for i := 0; i < len(slice); i++ {
+		keys[fn(slice[i])] = slice[i]
+	}
+
+	for _, v := range keys {
+		list = append(list, v)
+	}
+
+	return list
+}
+
 func Filter[T any](slice []T, filter func(T) bool) []T {
 	filtered := make([]T, 0)
 
@@ -63,6 +78,14 @@ func GetRange[T any](slice []T, fromIndex int, length int) []T {
 		filtered = append(filtered, slice[fromIndex+i])
 	}
 	return filtered
+}
+
+func GetMapKeys[K comparable, V comparable](mmap map[K]V) []K {
+	l := make([]K, 0)
+	for k, _ := range mmap {
+		l = append(l, k)
+	}
+	return l
 }
 
 //func Sort[T comparable](slice []T, s func(i, j T) int) []T {
@@ -88,4 +111,15 @@ var r = rand.New(rand.NewSource(time.Now().Unix()))
 
 func PickRandom[T any](slice []T) T {
 	return slice[r.Intn(len(slice))]
+}
+
+func MaxSize[T any](slice []T, max int) []T {
+	filtered := make([]T, 0)
+	for i, v := range slice {
+		if i >= max {
+			break
+		}
+		filtered = append(filtered, v)
+	}
+	return filtered
 }

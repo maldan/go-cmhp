@@ -5,12 +5,14 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/maldan/go-cmhp/cmhp_compress"
 	"github.com/maldan/go-cmhp/cmhp_crypto"
+	"github.com/maldan/go-cmhp/cmhp_reflect"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -24,9 +26,11 @@ type Data interface {
 }
 
 type FileInfo struct {
-	FullPath string
-	Name     string
-	Dir      string
+	RelativePath string
+	FullPath     string
+	Name         string
+	Dir          string
+	IsDir        bool
 }
 
 func ReadBin(path string) ([]byte, error) {
@@ -48,6 +52,58 @@ func ReadJSON(path string, v interface{}) error {
 	return err
 }
 
+func ReadCSV[T any](path string) ([]T, error) {
+	f, err := os.Open(path)
+	defer f.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	csvReader := csv.NewReader(f)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// Fill header
+	header := make([]string, 0)
+	for _, v := range records[0] {
+		header = append(header, v)
+	}
+
+	// Records
+	out := make([]T, 0)
+	for i, line := range records {
+		if i == 0 {
+			continue
+		}
+
+		record := new(T)
+
+		for j, v := range line {
+			cmhp_reflect.SetField(record, header[j], v)
+		}
+		out = append(out, *record)
+	}
+
+	return out, nil
+}
+
+func ReadGenericJSON[T any](path string) (T, error) {
+	s := new(T)
+	err := ReadJSON(path, &s)
+	return *s, err
+}
+
+func UpdateJSON[T any](path string, f func(*T)) error {
+	s := new(T)
+	ReadJSON(path, &s)
+	f(s)
+	err := Write(path, &s)
+	return err
+}
+
 func ReadCompressedJSON(path string, v interface{}) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -60,6 +116,15 @@ func ReadCompressedJSON(path string, v interface{}) error {
 
 	err = json.Unmarshal(cdata, v)
 	return err
+}
+
+func Mkdir(path string) error {
+	// Create path for file
+	err := os.MkdirAll(path, 0777)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Write bytes, text or struct as json to file
@@ -89,6 +154,31 @@ func Write(path string, data interface{}) error {
 	}
 
 	return nil
+}
+
+func WriteCSV[T comparable](path string, header []string, data []T) error {
+	final := make([][]string, len(data)+1)
+	for _, h := range header {
+		final[0] = append(final[0], h)
+	}
+
+	for i, v := range data {
+		for _, h := range header {
+			fieldValue := cmhp_reflect.GetFieldValue(&v, h)
+			final[i+1] = append(final[i+1], fmt.Sprintf("%v", fieldValue))
+		}
+	}
+
+	file, err := os.Create(path)
+	defer file.Close()
+	if err != nil {
+		return err
+	}
+
+	w := csv.NewWriter(file)
+	defer w.Flush()
+
+	return w.WriteAll(final)
 }
 
 // WriteCompressed bytes, text or struct as json to file and compress it
@@ -196,9 +286,11 @@ func List(path string) ([]FileInfo, error) {
 		absPath = strings.ReplaceAll(absPath, "\\", "/")
 
 		out = append(out, FileInfo{
-			FullPath: absPath,
-			Dir:      strings.ReplaceAll(filepath.Dir(absPath), "\\", "/"),
-			Name:     f.Name(),
+			FullPath:     absPath,
+			Dir:          strings.ReplaceAll(filepath.Dir(absPath), "\\", "/"),
+			Name:         f.Name(),
+			RelativePath: f.Name(),
+			IsDir:        f.IsDir(),
 		})
 	}
 	return out, nil
@@ -206,6 +298,9 @@ func List(path string) ([]FileInfo, error) {
 
 func ListAll(path string) ([]FileInfo, error) {
 	list := make([]FileInfo, 0)
+
+	curAbsPath, _ := filepath.Abs(path)
+	curAbsPath = strings.ReplaceAll(curAbsPath, "\\", "/")
 
 	err := filepath.Walk(path,
 		func(path string, info os.FileInfo, err error) error {
@@ -220,10 +315,12 @@ func ListAll(path string) ([]FileInfo, error) {
 
 			absPath, _ := filepath.Abs(path)
 			absPath = strings.ReplaceAll(absPath, "\\", "/")
+
 			list = append(list, FileInfo{
-				FullPath: absPath,
-				Dir:      strings.ReplaceAll(filepath.Dir(absPath), "\\", "/"),
-				Name:     info.Name(),
+				FullPath:     absPath,
+				RelativePath: strings.Replace(absPath, curAbsPath, "", 1),
+				Dir:          strings.ReplaceAll(filepath.Dir(absPath), "\\", "/"),
+				Name:         info.Name(),
 			})
 
 			return nil

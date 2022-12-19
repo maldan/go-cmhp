@@ -5,6 +5,15 @@ import (
 	"strings"
 )
 
+func Allow_aZ09(str string) string {
+	return strings.Map(func(r rune) rune {
+		if strings.ContainsRune("abcdefghilkmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ0123456789_", r) {
+			return r
+		}
+		return -1
+	}, str)
+}
+
 func AllowCommon(str string) string {
 	return strings.Map(func(r rune) rune {
 		if strings.ContainsRune("abcdefghilkmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ0123456789_ ", r) {

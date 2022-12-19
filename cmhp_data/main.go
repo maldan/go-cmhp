@@ -30,6 +30,11 @@ func FromFile(path string, isLE bool) (*ByteArray, error) {
 	return &ba, nil
 }
 
+func FromBytes(data []byte, isLE bool) *ByteArray {
+	ba := ByteArray{Capacity: uint64(len(data)), Length: uint64(len(data)), Data: data, IsLittleEndian: isLE}
+	return &ba
+}
+
 func (b *ByteArray) WriteUInt8(value uint8) {
 	if b.Length+1 > b.Capacity {
 		b.Grow(1)
@@ -82,6 +87,24 @@ func (b *ByteArray) WriteUTF8(value string) {
 	arr := []byte(value)
 	for i := 0; i < len(arr); i++ {
 		b.WriteUInt8(arr[i])
+	}
+}
+
+func (b *ByteArray) WriteChars(value string, length int) {
+	arr := []byte(value)
+	dataLength := int(math.Min(float64(len(value)), float64(length)))
+	for i := 0; i < length; i++ {
+		if i > dataLength-1 {
+			b.WriteUInt8(0)
+		} else {
+			b.WriteUInt8(arr[i])
+		}
+	}
+}
+
+func (b *ByteArray) WriteBytes(value []byte) {
+	for i := 0; i < len(value); i++ {
+		b.WriteUInt8(value[i])
 	}
 }
 

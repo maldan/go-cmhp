@@ -34,3 +34,12 @@ func TestCompress(t *testing.T) {
 		t.Fatal()
 	}
 }
+
+func TestCSV(t *testing.T) {
+	type TempCsv struct {
+		A string `csv:"a"`
+		B string `csv:"b"`
+	}
+	list, _ := cmhp_file.ReadCSV[TempCsv]("../t.csv")
+	fmt.Printf("%v", list)
+}

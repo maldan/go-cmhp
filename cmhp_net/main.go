@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,6 +14,7 @@ type HttpResponse struct {
 	StatusCode int    `json:"statusCode"`
 	Body       []byte `json:"body"`
 	Error      error  `json:"error"`
+	Url        string `json:"url"`
 }
 
 type HttpArgs struct {
@@ -22,8 +24,8 @@ type HttpArgs struct {
 	Proxy   string
 
 	InputData  []byte
-	InputJSON  interface{}
-	OutputJSON interface{}
+	InputJSON  map[string]any
+	OutputJSON *map[string]any
 }
 
 func Request(args HttpArgs) HttpResponse {
@@ -45,7 +47,13 @@ func Request(args HttpArgs) HttpResponse {
 
 	// Create request
 	var req *http.Request
-	if args.Method == "POST" {
+	if args.Method == "GET" || args.Method == "DELETE" {
+		newUrl += "?"
+		for k, v := range args.InputJSON {
+			newUrl += fmt.Sprintf("%v=%v&", k, v)
+		}
+	}
+	if args.Method == "POST" || args.Method == "PATCH" || args.Method == "PUT" {
 		if args.InputJSON != nil {
 			out, _ := json.Marshal(args.InputJSON)
 			r, err := http.NewRequest(args.Method, newUrl, bytes.NewBuffer(out))
@@ -100,6 +108,7 @@ func Request(args HttpArgs) HttpResponse {
 	// Fill
 	response.StatusCode = resp.StatusCode
 	response.Body = body
+	response.Url = newUrl
 
 	// Out to JSON
 	if args.OutputJSON != nil {

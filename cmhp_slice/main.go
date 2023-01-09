@@ -69,6 +69,15 @@ func Filter[T any](slice []T, filter func(T) bool) []T {
 	return filtered
 }
 
+func Find[T any](slice []T, filter func(T) bool) (T, bool) {
+	for _, v := range slice {
+		if filter(v) {
+			return v, true
+		}
+	}
+	return *new(T), false
+}
+
 func GetRange[T any](slice []T, fromIndex int, length int) []T {
 	filtered := make([]T, 0)
 	for i := 0; i < length; i++ {
@@ -99,6 +108,24 @@ func GetMapKeys[K comparable, V comparable](mmap map[K]V) []K {
 //}
 //
 
+func Paginate[T any](slice []T, offset int, limit int) []T {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit < 0 {
+		limit = 0
+	}
+	if offset > len(slice) {
+		offset = len(slice)
+	}
+
+	end := offset + limit
+	if end > len(slice) {
+		end = len(slice)
+	}
+	return slice[offset:end]
+}
+
 func Map[T any, R any](slice []T, m func(T) R) []R {
 	mapped := make([]R, 0)
 	for _, v := range slice {
@@ -122,4 +149,16 @@ func MaxSize[T any](slice []T, max int) []T {
 		filtered = append(filtered, v)
 	}
 	return filtered
+}
+
+func Combine[T any](slices ...[]T) []T {
+	finalSlice := make([]T, 0)
+
+	for i := 0; i < len(slices); i++ {
+		for j := 0; j < len(slices[i]); j++ {
+			finalSlice = append(finalSlice, slices[i][j])
+		}
+	}
+
+	return finalSlice
 }

@@ -48,6 +48,28 @@ func LowerFirst(str string) string {
 	return strings.ToLower(str[0:1]) + str[1:]
 }
 
+func ToCamelCase(str string) string {
+	return LowerFirst(ToPascalCase(str))
+}
+
+func ToPascalCase(str string) string {
+	out := ""
+	isNextBig := false
+	for i := 0; i < len(str); i++ {
+		if str[i] == ' ' || str[i] == '_' {
+			isNextBig = true
+			continue
+		}
+		if isNextBig {
+			out += strings.ToUpper(string(str[i]))
+			isNextBig = false
+		} else {
+			out += string(str[i])
+		}
+	}
+	return LowerFirst(out)
+}
+
 func ParseParameterList(query string, sep1 string, sep2 string) map[string]interface{} {
 	list := strings.Split(query, sep1)
 	out := make(map[string]interface{})

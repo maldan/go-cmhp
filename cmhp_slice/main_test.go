@@ -53,6 +53,42 @@ func TestMap(t *testing.T) {
 	}
 }
 
+func TestPaginate(t *testing.T) {
+	newArray := make([]int, 10)
+	for i := 0; i < 10; i++ {
+		newArray[i] = i
+	}
+	s := cmhp_slice.Paginate(newArray, 0, 10)
+	if fmt.Sprintf("%v", s) != "[0 1 2 3 4 5 6 7 8 9]" {
+		t.Error("Fuck paginate")
+	}
+
+	s = cmhp_slice.Paginate(newArray, 5, 10)
+	if fmt.Sprintf("%v", s) != "[5 6 7 8 9]" {
+		t.Error("Fuck paginate")
+	}
+
+	s = cmhp_slice.Paginate(newArray, 9, 10)
+	if fmt.Sprintf("%v", s) != "[9]" {
+		t.Error("Fuck paginate")
+	}
+
+	s = cmhp_slice.Paginate(newArray, 111, 111)
+	if fmt.Sprintf("%v", s) != "[]" {
+		t.Error("Fuck paginate")
+	}
+
+	s = cmhp_slice.Paginate(newArray, -1, 10)
+	if fmt.Sprintf("%v", s) != "[0 1 2 3 4 5 6 7 8 9]" {
+		t.Error("Fuck paginate")
+	}
+
+	s = cmhp_slice.Paginate(newArray, -1, -1)
+	if fmt.Sprintf("%v", s) != "[]" {
+		t.Error("Fuck paginate")
+	}
+}
+
 func BenchmarkOne(b *testing.B) {
 	newArray := []int{1, 2, 3, 4, 5}
 	for i := 0; i < b.N; i++ {

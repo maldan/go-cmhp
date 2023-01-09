@@ -2,10 +2,6 @@ package cmhp_crypto
 
 import (
 	"crypto/rand"
-	"crypto/sha1"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"math/big"
 	"os"
 	"runtime"
@@ -21,38 +17,6 @@ var b = big.NewInt(1_000_000_000)
 
 func init() {
 	runtime.ReadMemStats(&m)
-}
-
-func Sha1(data interface{}) string {
-	hasher := sha1.New()
-
-	switch data.(type) {
-	case []byte:
-		hasher.Write(data.([]byte))
-		return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	case string:
-		hasher.Write([]byte(data.(string)))
-		return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	default:
-		bb, _ := json.Marshal(data)
-		hasher.Write(bb)
-		return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	}
-}
-
-func Sha256(data interface{}) string {
-	hasher := sha256.New()
-
-	switch data.(type) {
-	case []byte:
-		hasher.Write(data.([]byte))
-		return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	case string:
-		hasher.Write([]byte(data.(string)))
-		return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	default:
-		panic("Unsupported type")
-	}
 }
 
 func UID(size int) string {

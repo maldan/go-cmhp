@@ -17,6 +17,11 @@ func GetFieldValue(s interface{}, name string) any {
 	return reflect.ValueOf(f).Interface()
 }
 
+func GetFieldValueAnCast[T any](s interface{}, name string) T {
+	f := reflect.ValueOf(s).Elem().FieldByName(name)
+	return reflect.ValueOf(f).Interface().(T)
+}
+
 func StructToMap(s any) map[string]any {
 	var mp map[string]any
 	j, _ := json.Marshal(s)

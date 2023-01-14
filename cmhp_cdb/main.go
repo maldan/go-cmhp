@@ -3,24 +3,33 @@ package cmhp_cdb
 import (
 	"fmt"
 	"github.com/maldan/go-cmhp/cmhp_file"
-	"github.com/maldan/go-cmhp/cmhp_slice"
+	"os"
+	"path/filepath"
 	"sync"
+	"time"
 )
 
-type ChunkMaster[T any] struct {
+type idAble interface {
+	GetId() any
+}
+
+type ChunkMaster[T idAble] struct {
 	sync.Mutex
 	Name          string
 	Size          int
 	AutoIncrement int
 	ChunkList     []Chunk[T]
+	IndexList     []string
+	ShowLogs      bool
 }
 
 type ChunkMasterAutoIncrement struct {
 	Counter int `json:"counter"`
 }
 
-func (m *ChunkMaster[T]) LoadAll() {
+func (m *ChunkMaster[T]) Init() *ChunkMaster[T] {
 	m.Lock()
+	// defer m.BuildIndexMap()
 	defer m.Unlock()
 
 	if m.Name == "" {
@@ -28,20 +37,34 @@ func (m *ChunkMaster[T]) LoadAll() {
 	}
 
 	// Read chunk info
-	info, _ := cmhp_file.ReadGenericJSON[ChunkMasterAutoIncrement](m.Name + "/counter.json")
-	m.AutoIncrement = info.Counter
-	fmt.Printf("Prepare chunk [%v] - %v\n", m.Name, info)
+	info, err := cmhp_file.ReadGenericJSON[ChunkMasterAutoIncrement](m.Name + "/counter.json")
+	if err == nil {
+		m.AutoIncrement = info.Counter
+	}
 
 	// Init chunks
+	t := time.Now()
 	m.ChunkList = make([]Chunk[T], m.Size)
 	loadTotal := 0
 	for i := 0; i < m.Size; i++ {
+		m.ChunkList[i].IndexList = m.IndexList
 		m.ChunkList[i].Name = m.Name
-		m.ChunkList[i].Index = i
+		m.ChunkList[i].Id = i
 		loadTotal += m.ChunkList[i].Load()
 	}
 
-	fmt.Printf("Load chunk [%v] - %v total\n", m.Name, loadTotal)
+	if m.ShowLogs {
+		name := m.Name
+		wd, _ := os.Getwd()
+		name, _ = filepath.Rel(wd, m.Name)
+		fmt.Printf("Load chunk [%v] - %v total | %v\n", name, loadTotal, time.Since(t))
+	}
+
+	return m
+}
+
+func (m *ChunkMaster[T]) EnableAutoSave() *ChunkMaster[T] {
+	return m
 }
 
 func (m *ChunkMaster[T]) SaveAll() {
@@ -56,10 +79,10 @@ func (m *ChunkMaster[T]) SaveChanged() {
 	}
 }
 
-func (m *ChunkMaster[T]) SaveChunk(toHash any) {
-	hash := m.StrHash(fmt.Sprintf("%v", toHash), m.Size)
+/*func (m *ChunkMaster[T]) SaveChunkByHash(toHash any) {
+	hash := m.Hash(toHash, m.Size)
 	m.ChunkList[hash].Save()
-}
+}*/
 
 // ForEach go over each value in all chunks
 func (m *ChunkMaster[T]) ForEach(fn func(item T) bool) {
@@ -79,157 +102,8 @@ func (m *ChunkMaster[T]) ForEach(fn func(item T) bool) {
 	}
 }
 
-// Find value in chunk [toHash] by [cond]
-func (m *ChunkMaster[T]) Find(toHash any, cond func(v T) bool) (T, bool) {
-	hash := m.StrHash(fmt.Sprintf("%v", toHash), m.Size)
-	m.ChunkList[hash].RLock()
-	defer m.ChunkList[hash].RUnlock()
-
-	for _, item := range m.ChunkList[hash].List {
-		if cond(item) {
-			return item, true
-		}
-	}
-	return *new(T), false
-}
-
-// Contains value in chunk [toHash] by [cond]
-func (m *ChunkMaster[T]) Contains(toHash any, cond func(v T) bool) bool {
-	hash := m.StrHash(fmt.Sprintf("%v", toHash), m.Size)
-	m.ChunkList[hash].RLock()
-	defer m.ChunkList[hash].RUnlock()
-
-	for _, item := range m.ChunkList[hash].List {
-		if cond(item) {
-			return true
-		}
-	}
-	return false
-}
-
-// AddOrReplace value to chunk [toHash] and save it
-func (m *ChunkMaster[T]) AddOrReplace(v T, toHash any, where func(v T) bool) {
-	if !m.Replace(v, toHash, where) {
-		m.Add(v, toHash)
-	}
-}
-
-// Add value to chunk [toHash] and save it
-func (m *ChunkMaster[T]) Add(v T, toHash any) {
-	hash := m.StrHash(fmt.Sprintf("%v", toHash), m.Size)
-	m.ChunkList[hash].Lock()
-	m.ChunkList[hash].List = append(m.ChunkList[hash].List, v)
-	m.ChunkList[hash].IsChanged = true
-	m.ChunkList[hash].SaveWithoutLock()
-	m.ChunkList[hash].Unlock()
-}
-
-// Replace value in chunk [toHash] by condition [where]
-func (m *ChunkMaster[T]) Replace(val T, toHash any, where func(v T) bool) bool {
-	hash := m.StrHash(fmt.Sprintf("%v", toHash), m.Size)
-	m.ChunkList[hash].Lock()
-	defer m.ChunkList[hash].Unlock()
-	for i := 0; i < len(m.ChunkList[hash].List); i++ {
-		if where(m.ChunkList[hash].List[i]) {
-			m.ChunkList[hash].List[i] = val
-			m.ChunkList[hash].IsChanged = true
-			m.ChunkList[hash].SaveWithoutLock()
-			return true
-		}
-	}
-	return false
-}
-
-// Delete values in chunk [toHash] by condition [where]
-func (m *ChunkMaster[T]) Delete(toHash any, where func(v T) bool) {
-	hash := m.StrHash(fmt.Sprintf("%v", toHash), m.Size)
-	m.ChunkList[hash].Lock()
-	defer m.ChunkList[hash].Unlock()
-
-	// Filter values
-	lenWas := len(m.ChunkList[hash].List)
-	m.ChunkList[hash].List = cmhp_slice.Filter(m.ChunkList[hash].List, func(i T) bool {
-		return !where(i)
-	})
-
-	// Elements was deletes
-	if lenWas != len(m.ChunkList[hash].List) {
-		m.ChunkList[hash].IsChanged = true
-		m.ChunkList[hash].SaveWithoutLock()
-	}
-}
-
-// DeleteInAll values in all chunks by condition [where]
-func (m *ChunkMaster[T]) DeleteInAll(where func(v T) bool) {
-	for i := 0; i < m.Size; i++ {
-		m.ChunkList[i].Lock()
-
-		// Filter values
-		lenWas := len(m.ChunkList[i].List)
-		m.ChunkList[i].List = cmhp_slice.Filter(m.ChunkList[i].List, func(i T) bool {
-			return !where(i)
-		})
-
-		// Elements was deletes
-		if lenWas != len(m.ChunkList[i].List) {
-			m.ChunkList[i].IsChanged = true
-		}
-
-		m.ChunkList[i].Unlock()
-	}
-}
-
-func (m *ChunkMaster[T]) FindInAll(fn func(v T) bool) (T, bool) {
-	out := *new(T)
-	isFound := false
-	m.ForEach(func(item T) bool {
-		if fn(item) {
-			out = item
-			isFound = true
-			return false
-		}
-		return true
-	})
-	return out, isFound
-}
-
-func (m *ChunkMaster[T]) ContainsInAll(fn func(v T) bool) bool {
-	isFound := false
-	m.ForEach(func(item T) bool {
-		if fn(item) {
-			isFound = true
-			return false
-		}
-		return true
-	})
-	return isFound
-}
-
-func (m *ChunkMaster[T]) FilterInAll(fn func(v T) bool) []T {
-	out := make([]T, 0)
-
-	m.ForEach(func(item T) bool {
-		if fn(item) {
-			out = append(out, item)
-		}
-		return true
-	})
-	return out
-}
-
-// All Copy all values from list
-func (m *ChunkMaster[T]) All() []T {
-	out := make([]T, 0)
-
-	m.ForEach(func(item T) bool {
-		out = append(out, item)
-		return true
-	})
-	return out
-}
-
-// GetId generate thread safe autoincrement id
-func (m *ChunkMaster[T]) GetId() int {
+// GenerateId generate thread safe autoincrement id
+func (m *ChunkMaster[T]) GenerateId() int {
 	out := 0
 	m.Lock()
 	m.AutoIncrement += 1
@@ -251,10 +125,58 @@ func (m *ChunkMaster[T]) TotalElements() int {
 	return count
 }
 
-func (m *ChunkMaster[T]) StrHash(str string, max int) int {
+/*func (m *ChunkMaster[T]) StrHash(str string, max int) int {
 	hash := 0
 	for i := 0; i < len(str); i++ {
 		hash += int(str[i])
 	}
 	return hash % max
+}
+
+func (m *ChunkMaster[T]) IntHash(num int, max int) int {
+	return num % max
+}*/
+
+/*func (m *ChunkMaster[T]) BuildIndexMap() {
+	m.IndexStorage = make(map[string][]*T)
+
+	// Build index
+	for _, index := range m.IndexList {
+		for i := 0; i < m.Size; i++ {
+			for j := 0; j < len(m.ChunkList[i].List); j++ {
+				m.AddIndex(index, &m.ChunkList[i].List[j])
+			}
+		}
+	}
+}
+
+func (m *ChunkMaster[T]) AddIndex(index string, ref *T) {
+	m.Lock()
+	defer m.Unlock()
+
+	f := reflect.ValueOf(ref).Elem().FieldByName(index)
+	mapIndex := reflect.ValueOf(f).Interface()
+	strIndex := fmt.Sprintf("%v:%v", index, mapIndex)
+	m.IndexStorage[strIndex] = append(m.IndexStorage[strIndex], ref)
+}*/
+
+func (m *ChunkMaster[T]) Hash(x any, max int) int {
+	switch x.(type) {
+	case string:
+		hash := 0
+		str := x.(string)
+		if str == "" {
+			panic("empty string hash")
+		}
+		for i := 0; i < len(str); i++ {
+			hash += int(str[i])
+		}
+		return hash % max
+	case int:
+		if x.(int) == 0 {
+			panic("empty int hash")
+		}
+		return x.(int) % max
+	}
+	panic("unsupported hash type")
 }

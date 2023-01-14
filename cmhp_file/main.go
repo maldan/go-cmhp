@@ -371,6 +371,25 @@ func Delete(path string) error {
 	return nil
 }
 
+func Rename(src string, dst string) error {
+	return os.Rename(src, dst)
+}
+
+func DeleteFile(path string) error {
+	info, err := Info(path)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		err = os.Remove(path)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func Size(path string) int64 {
 	stat, err := os.Stat(path)
 	if err != nil {

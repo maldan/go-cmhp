@@ -5,6 +5,7 @@ import (
 	"github.com/fatih/color"
 	"reflect"
 	"strings"
+	"unsafe"
 )
 
 func printMap(s interface{}, ident int) {
@@ -35,6 +36,8 @@ func printStruct(s interface{}, ident int, arrayIdent int, isHideType bool) {
 
 	sv := reflect.ValueOf(s)
 	st := reflect.TypeOf(s)
+	sv2 := reflect.New(sv.Type()).Elem()
+	sv2.Set(sv)
 
 	// Print struct header
 	fmt.Print(identArr)
@@ -53,11 +56,14 @@ func printStruct(s interface{}, ident int, arrayIdent int, isHideType bool) {
 	for i := 0; i < st.NumField(); i++ {
 		f := st.Field(i)
 
+		rf := sv2.Field(i)
+		rf = reflect.NewAt(rf.Type(), unsafe.Pointer(rf.UnsafeAddr())).Elem()
+
 		fmt.Printf("%v", ident2)
 		c.Print(sv.Field(i).Type())
 		fmt.Printf(" %v = ", f.Name)
 
-		__print(sv.Field(i).Interface(), ident+2, 0, true)
+		__print(rf.Interface(), ident+2, 0, true)
 	}
 
 	fmt.Print(ident1 + "}")
@@ -83,10 +89,20 @@ func printSlice(s interface{}, ident int) {
 	fmt.Printf("%v]", ident1)
 }
 
-func __print(val interface{}, ident int, arrayIdent int, isHideType bool) {
+func __print(val any, ident int, arrayIdent int, isHideType bool) {
 	v := reflect.TypeOf(val)
-
-	if v.Kind() == reflect.Map {
+	if v == nil {
+		fmt.Printf("%v\n", val)
+		return
+	}
+	if v.Kind() == reflect.Pointer {
+		el := reflect.ValueOf(val)
+		if el.IsNil() {
+			__print(nil, ident, arrayIdent, isHideType)
+		} else {
+			__print(reflect.ValueOf(val).Elem().Interface(), ident, arrayIdent, isHideType)
+		}
+	} else if v.Kind() == reflect.Map {
 		printMap(val, ident)
 	} else if v.Kind() == reflect.Struct {
 		printStruct(val, ident, arrayIdent, isHideType)

@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
-	"net/url"
+	hurl "net/url"
+	"os"
+	"path/filepath"
 )
 
 type HttpResponse struct {
@@ -28,6 +32,18 @@ type HttpArgs struct {
 	OutputJSON *map[string]any
 }
 
+type RequestOptions struct {
+	Headers map[string]string
+	Proxy   string
+}
+
+type Response[T any] struct {
+	StatusCode int    `json:"statusCode"`
+	Body       T      `json:"body"`
+	Error      error  `json:"error"`
+	Url        string `json:"url"`
+}
+
 func Request(args HttpArgs) HttpResponse {
 	response := HttpResponse{}
 
@@ -36,7 +52,7 @@ func Request(args HttpArgs) HttpResponse {
 
 	// Set proxy
 	if args.Proxy != "" {
-		proxyUrl, _ := url.Parse(args.Proxy)
+		proxyUrl, _ := hurl.Parse(args.Proxy)
 		client.Transport = &http.Transport{
 			Proxy:           http.ProxyURL(proxyUrl),
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -116,4 +132,89 @@ func Request(args HttpArgs) HttpResponse {
 	}
 
 	return response
+}
+
+func buildQuery(data map[string]any) string {
+	out := "?"
+	for k, v := range data {
+		out += fmt.Sprintf("%v=%v&", k, v)
+	}
+	return out
+}
+
+func GetJson[T any](url string, method string, data map[string]any, opts RequestOptions) Response[T] {
+	response := Response[T]{
+		Url: url,
+	}
+
+	// Create client
+	client := &http.Client{}
+
+	// Set proxy
+	if opts.Proxy != "" {
+		proxyUrl, _ := hurl.Parse(opts.Proxy)
+		client.Transport = &http.Transport{
+			Proxy:           http.ProxyURL(proxyUrl),
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
+	// Build query
+	if method == "GET" || method == "DELETE" {
+		response.Url += buildQuery(data)
+	}
+
+	// Prepare data
+	out, _ := json.Marshal(data)
+	inputData := bytes.NewBuffer(out)
+
+	// Create request
+	request, err := http.NewRequest(method, response.Url, inputData)
+	if err != nil {
+		response.Error = err
+		return response
+	}
+
+	// Fill headers
+	request.Header.Set("Content-Type", "application/json")
+	for k, v := range opts.Headers {
+		request.Header.Set(k, v)
+	}
+
+	// Do request
+	resp, err := client.Do(request)
+	if err != nil {
+		response.Error = err
+		return response
+	}
+
+	// Read
+	body, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		response.Error = err
+		return response
+	}
+
+	// Fill
+	response.StatusCode = resp.StatusCode
+	json.Unmarshal(body, &response.Body)
+
+	return response
+}
+
+func DownloadFile(url string, dest string) error {
+	r := Request(HttpArgs{Url: url, Method: "GET"})
+	if r.StatusCode != 200 {
+		return errors.New("can't get url")
+	}
+
+	// Create path for file
+	err := os.MkdirAll(filepath.Dir(dest), 0777)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(dest, r.Body, 0777)
+	return err
 }

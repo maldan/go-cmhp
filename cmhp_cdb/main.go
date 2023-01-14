@@ -29,7 +29,6 @@ type ChunkMasterAutoIncrement struct {
 
 func (m *ChunkMaster[T]) Init() *ChunkMaster[T] {
 	m.Lock()
-	// defer m.BuildIndexMap()
 	defer m.Unlock()
 
 	if m.Name == "" {
@@ -64,20 +63,26 @@ func (m *ChunkMaster[T]) Init() *ChunkMaster[T] {
 }
 
 func (m *ChunkMaster[T]) EnableAutoSave() *ChunkMaster[T] {
+	go func() {
+		for {
+			m.Save()
+			time.Sleep(time.Second)
+		}
+	}()
 	return m
 }
 
-func (m *ChunkMaster[T]) SaveAll() {
+func (m *ChunkMaster[T]) Save() {
 	for i := 0; i < m.Size; i++ {
 		m.ChunkList[i].Save()
 	}
 }
 
-func (m *ChunkMaster[T]) SaveChanged() {
+/*func (m *ChunkMaster[T]) SaveChanged() {
 	for i := 0; i < m.Size; i++ {
 		m.ChunkList[i].SaveIfChanged()
 	}
-}
+}*/
 
 /*func (m *ChunkMaster[T]) SaveChunkByHash(toHash any) {
 	hash := m.Hash(toHash, m.Size)

@@ -40,7 +40,7 @@ func (c *Chunk[T]) AddToIndex(ref *T) {
 	for _, index := range c.IndexList {
 		f := reflect.ValueOf(ref).Elem().FieldByName(index)
 		mapIndex := reflect.ValueOf(f).Interface()
-		strIndex := fmt.Sprintf("%v:%v", index, mapIndex)
+		strIndex := fmt.Sprintf("%s:%v", index, mapIndex)
 		c.indexStorage[strIndex] = append(c.indexStorage[strIndex], ref)
 	}
 }
@@ -48,10 +48,12 @@ func (c *Chunk[T]) AddToIndex(ref *T) {
 func (c *Chunk[T]) Save() {
 	c.Lock()
 	defer c.Unlock()
-	c.SaveWithoutLock()
-}
+	// c.SaveWithoutLock()
 
-func (c *Chunk[T]) SaveWithoutLock() {
+	if !c.IsChanged {
+		return
+	}
+
 	// Write to disk
 	t := time.Now()
 	err := cmhp_file.Write(c.Name+"/chunk_"+fmt.Sprintf("%v", c.Id)+".json.tmp", &c.List)
@@ -75,12 +77,6 @@ func (c *Chunk[T]) SaveWithoutLock() {
 		fmt.Printf("Save chunk [%v:%v] - %v records | %v\n", name, c.Id, len(c.List), time.Since(t))
 	}
 	c.IsChanged = false
-}
-
-func (c *Chunk[T]) SaveIfChanged() {
-	if c.IsChanged {
-		c.Save()
-	}
 }
 
 func (c *Chunk[T]) Load() int {
@@ -109,15 +105,16 @@ func (c *Chunk[T]) Load() int {
 }
 
 // Find value in chunk by [cond]
-func (c *Chunk[T]) Find(cond func(v T) bool) (T, bool) {
+func (c *Chunk[T]) Find(cond func(v *T) bool) (T, bool) {
 	c.RLock()
 	defer c.RUnlock()
 
-	for _, item := range c.List {
-		if cond(item) {
-			return item, true
+	for i := 0; i < len(c.List); i++ {
+		if cond(&c.List[i]) {
+			return c.List[i], true
 		}
 	}
+
 	return *new(T), false
 }
 
@@ -135,7 +132,6 @@ func (c *Chunk[T]) Delete(where func(v T) bool) {
 	// Elements was deletes
 	if lenWas != len(c.List) {
 		c.IsChanged = true
-		// c.SaveWithoutLock()
 	}
 }
 
@@ -143,66 +139,25 @@ func (c *Chunk[T]) FindByIndex(indexName string, indexValue any) (T, bool) {
 	c.RLock()
 	defer c.RUnlock()
 
-	strIndex := fmt.Sprintf("%v:%v", indexName, indexValue)
+	strIndex := fmt.Sprintf("%s:%v", indexName, indexValue)
 	for _, val := range c.indexStorage[strIndex] {
 		return *val, true
 	}
+
 	return *new(T), false
 }
 
-func (c *Chunk[T]) FindAllByIndex(indexName string, indexValue any) []T {
+func (c *Chunk[T]) FindManyByIndex(indexName string, indexValue any) []T {
 	c.RLock()
 	defer c.RUnlock()
 
-	strIndex := fmt.Sprintf("%v:%v", indexName, indexValue)
+	strIndex := fmt.Sprintf("%s:%v", indexName, indexValue)
 	out := make([]T, 0)
 	for _, val := range c.indexStorage[strIndex] {
 		out = append(out, *val)
 	}
 	return out
 }
-
-// Replace value in chunk [toHash] by condition [where]
-/*func (c *Chunk[T]) Replace(val T, where func(v T) bool) bool {
-	c.Lock()
-	defer c.Unlock()
-
-	for i := 0; i < len(c.List); i++ {
-		if where(c.List[i]) {
-			c.List[i] = val
-			c.IsChanged = true
-			c.SaveWithoutLock()
-			return true
-		}
-	}
-	return false
-}*/
-
-// Add value to chunk [toHash] and save it
-/*func (c *Chunk[T]) Add(v T) {
-	//hash := m.Hash(v.GetId(), m.Size)
-	//c.FastAdd(v)
-	//c.Save()
-	c.Lock()
-	defer c.Unlock()
-
-	c.List = append(c.List, v)
-	c.IsChanged = true
-}*/
-
-// FastAdd value to chunk [toHash] without save
-/*func (c *Chunk[T]) FastAdd(v T) {
-	c.Lock()
-	defer c.Unlock()
-
-	c.List = append(c.List, v)
-	c.IsChanged = true
-
-	// Build index
-	for _, index := range m.IndexList {
-		m.AddIndex(index, &v)
-	}
-}*/
 
 // Contains value in chunk by [cond]
 func (c *Chunk[T]) Contains(cond func(v T) bool) bool {
@@ -216,11 +171,3 @@ func (c *Chunk[T]) Contains(cond func(v T) bool) bool {
 	}
 	return false
 }
-
-// AddOrReplace value to chunk and save it
-/*func (c *Chunk[T]) AddOrReplace(v T, where func(v T) bool) {
-	if !c.Replace(v, where) {
-		c.Add(v)
-	}
-}
-*/

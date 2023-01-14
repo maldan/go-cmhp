@@ -57,11 +57,6 @@ func (m *ChunkMaster[T]) Add(v T) {
 
 	// Add to index map
 	m.ChunkList[hash].AddToIndex(&v)
-
-	// Add to index
-	/*for _, index := range m.IndexList {
-		m.AddIndex(index, &v)
-	}*/
 }
 
 // Replace value in chunk [toHash] by condition [where]
@@ -149,7 +144,7 @@ func (m *ChunkMaster[T]) ContainsInAll(fn func(v T) bool) bool {
 	return isFound
 }
 
-func (m *ChunkMaster[T]) FilterInAll(fn func(v T) bool) []T {
+func (m *ChunkMaster[T]) FindMany(fn func(v T) bool) []T {
 	out := make([]T, 0)
 
 	m.ForEach(func(item T) bool {
@@ -182,11 +177,11 @@ func (m *ChunkMaster[T]) FindByIndex(indexName string, indexValue any) (T, bool)
 	return *new(T), false
 }
 
-func (m *ChunkMaster[T]) FindAllByIndex(indexName string, indexValue any) []T {
+func (m *ChunkMaster[T]) FindManyByIndex(indexName string, indexValue any) []T {
 	out := make([]T, 0)
 
 	for i := 0; i < len(m.ChunkList); i++ {
-		l := m.ChunkList[i].FindAllByIndex(indexName, indexValue)
+		l := m.ChunkList[i].FindManyByIndex(indexName, indexValue)
 		out = append(out, l...)
 	}
 	return out

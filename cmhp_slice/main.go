@@ -69,6 +69,16 @@ func Filter[T any](slice []T, filter func(T) bool) []T {
 	return filtered
 }
 
+func ToAny[T any](slice []T) []any {
+	filtered := make([]any, len(slice))
+
+	for i := 0; i < len(slice); i++ {
+		filtered[i] = any(slice[i])
+	}
+
+	return filtered
+}
+
 func Find[T any](slice []T, filter func(T) bool) (T, bool) {
 	for _, v := range slice {
 		if filter(v) {

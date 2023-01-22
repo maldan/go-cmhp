@@ -58,12 +58,12 @@ func UniqueBy[T comparable](slice []T, fn func(T) any) []T {
 	return list
 }
 
-func Filter[T any](slice []T, filter func(T) bool) []T {
+func Filter[T any](slice []T, filter func(*T) bool) []T {
 	filtered := make([]T, 0)
 
-	for _, v := range slice {
-		if filter(v) {
-			filtered = append(filtered, v)
+	for i := 0; i < len(slice); i++ {
+		if filter(&slice[i]) {
+			filtered = append(filtered, slice[i])
 		}
 	}
 	return filtered
@@ -108,15 +108,14 @@ func GetMapKeys[K comparable, V comparable](mmap map[K]V) []K {
 }
 
 //func Sort[T comparable](slice []T, s func(i, j T) int) []T {
-//sorted := make([]T, 0)
-//return sorted
-//copy := Filter(slice, func(i T) bool { return true })
-//sort.SliceStable(copy, s)
-//return copy
-//panic("xxx")
-//return slice
+//	sorted := make([]T, 0)
+//	return sorted
+//	copy := Filter(slice, func(i T) bool { return true })
+//	sort.SliceStable(copy, s)
+//	return copy
+//	panic("xxx")
+//	return slice
 //}
-//
 
 func Paginate[T any](slice []T, offset int, limit int) []T {
 	if offset < 0 {

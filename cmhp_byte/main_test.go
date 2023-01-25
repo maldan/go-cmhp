@@ -153,7 +153,7 @@ func TestUnpack(t *testing.T) {
 		EmergencyPersonName:  "Сукаа маруляяяя",
 		EmergencyPersonPhone: "Сукаа маруляяяя",
 	})
-	tt := cmhp_byte.Unpack[Test](&bytes)
+	tt := cmhp_byte.Unpack[Test](bytes)
 	fmt.Printf("%v\n", tt)
 }
 
@@ -190,7 +190,7 @@ func BenchmarkUnMy(b *testing.B) {
 	bytes := cmhp_byte.Pack(&a)
 
 	for i := 0; i < b.N; i++ {
-		cmhp_byte.Unpack[Test](&bytes)
+		cmhp_byte.Unpack[Test](bytes)
 		b.SetBytes(int64(len(bytes)))
 	}
 }

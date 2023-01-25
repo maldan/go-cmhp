@@ -45,7 +45,7 @@ func TestPackCheckBytes(t *testing.T) {
 
 func TestPackString(t *testing.T) {
 	bytes := cmhp_byte.Pack[TestString](&TestString{StrDefault: "1", StrTiny: "123", StrShort: "123456"})
-	tt := cmhp_byte.Unpack[TestString](&bytes)
+	tt := cmhp_byte.Unpack[TestString](bytes)
 	if tt.StrDefault != "1" {
 		t.Error("Fuck")
 	}
@@ -67,7 +67,7 @@ func TestPackStringMaxLength(t *testing.T) {
 
 	// Pack and unpack
 	bytes := cmhp_byte.Pack[TestString](sIn)
-	sOut := cmhp_byte.Unpack[TestString](&bytes)
+	sOut := cmhp_byte.Unpack[TestString](bytes)
 
 	if len(sOut.StrDefault) != 65535 {
 		t.Errorf("Fuck %v", len(sOut.StrDefault))
@@ -89,7 +89,7 @@ func TestPackStringMaxLengthUTF8(t *testing.T) {
 
 	// Pack and unpack
 	bytes := cmhp_byte.Pack[TestString](sIn)
-	sOut := cmhp_byte.Unpack[TestString](&bytes)
+	sOut := cmhp_byte.Unpack[TestString](bytes)
 
 	if sOut.StrTinyRus != "су" {
 		t.Error("Fuck")

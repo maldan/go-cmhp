@@ -139,16 +139,19 @@ func Write64ToBuffer(v uint64, buffer *[]byte, bufferOffset int) int {
 	return 8
 }
 
-func Read16FromBuffer(buffer *[]byte, bufferOffset int) uint16 {
-	off := (*buffer)[bufferOffset:]
-	return binary.LittleEndian.Uint16(off)
-	//return uint16(int((*buffer)[bufferOffset]) + int((*buffer)[bufferOffset+1])*256)
+func Read16FromBuffer(buffer []byte, bufferOffset int) uint16 {
+	//return binary.LittleEndian.Uint16((buffer)[bufferOffset:bufferOffset+2])
+	return uint16(int((buffer)[bufferOffset]) + int((buffer)[bufferOffset+1])*256)
 }
 
-func Read24FromBuffer(buffer *[]byte, bufferOffset int) uint32 {
-	return uint32(int((*buffer)[bufferOffset]) + int((*buffer)[bufferOffset+1])*256 + int((*buffer)[bufferOffset+2])*65536)
+func Read24FromBuffer(buffer []byte, bufferOffset int) uint32 {
+	return uint32(int((buffer)[bufferOffset]) + int((buffer)[bufferOffset+1])*256 + int((buffer)[bufferOffset+2])*65536)
 }
 
-func Read32FromBuffer(buffer *[]byte, bufferOffset int) uint32 {
-	return uint32(int((*buffer)[bufferOffset]) + int((*buffer)[bufferOffset+1])*256 + int((*buffer)[bufferOffset+2])*65536 + int((*buffer)[bufferOffset+3])*16777216)
+func Read32FromBuffer(buffer []byte, bufferOffset int) uint32 {
+	return uint32(int((buffer)[bufferOffset]) + int((buffer)[bufferOffset+1])*256 + int((buffer)[bufferOffset+2])*65536 + int((buffer)[bufferOffset+3])*16777216)
+}
+
+func CheckBitMask[T int | uint | uint64 | int64](v T, mask T) bool {
+	return v&mask == mask
 }

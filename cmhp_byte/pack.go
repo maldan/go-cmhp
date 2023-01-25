@@ -246,27 +246,27 @@ func Pack[T any](v *T) []byte {
 	return out
 }
 
-func Unpack[T any](b *[]byte) T {
+func Unpack[T any](b []byte) T {
 	out := new(T)
 	info := getTypeInfo(out)
 
 	// Read fields number
 	p := 0
-	numOfFields := (*b)[p]
+	numOfFields := (b)[p]
 	p++
 
 	// Read fields
 	for i := 0; i < int(numOfFields); i++ {
 		// Read field length
-		fieldLength := int((*b)[p])
+		fieldLength := int((b)[p])
 		p += 1
 
 		// Read field name
-		fieldName := string((*b)[p : p+fieldLength])
+		fieldName := string((b)[p : p+fieldLength])
 		p += fieldLength
 
 		// Read field type
-		vType := (*b)[p]
+		vType := (b)[p]
 		p += 1
 
 		// Field offset
@@ -274,41 +274,45 @@ func Unpack[T any](b *[]byte) T {
 
 		switch vType {
 		case _i8:
-			*(*uint8)(unsafe.Add(unsafe.Pointer(out), offset)) = (*b)[p]
+			*(*uint8)(unsafe.Add(unsafe.Pointer(out), offset)) = (b)[p]
 			p += 1
 			break
 		case _i16:
-			p += FromBufferTo16(b, (*uint16)(unsafe.Add(unsafe.Pointer(out), offset)), p)
+			p += FromBufferTo16(&b, (*uint16)(unsafe.Add(unsafe.Pointer(out), offset)), p)
 			break
 		case _i32:
-			p += FromBufferTo32(b, (*uint32)(unsafe.Add(unsafe.Pointer(out), offset)), p)
+			p += FromBufferTo32(&b, (*uint32)(unsafe.Add(unsafe.Pointer(out), offset)), p)
 			break
 		case _stringTiny:
 			// string length
-			strLength := (*b)[p]
+			strLength := (b)[p]
 			p += 1
-			*(*string)(unsafe.Add(unsafe.Pointer(out), offset)) = string((*b)[p : p+int(strLength)])
+			//*(*string)(unsafe.Add(unsafe.Pointer(out), offset)) = string((b)[p : p+int(strLength)])
+			*(*[]byte)(unsafe.Add(unsafe.Pointer(out), offset)) = make([]byte, int(strLength))
+			copy(*(*[]byte)(unsafe.Add(unsafe.Pointer(out), offset)), (b)[p:p+int(strLength)])
+			// fmt.Printf("%v", "XX")
 			p += int(strLength)
 			break
 		case _stringShort:
+			// fmt.Printf("%v\n", "GAS")
 			// string length
 			strLength := Read16FromBuffer(b, p)
 			p += 2
-			*(*string)(unsafe.Add(unsafe.Pointer(out), offset)) = string((*b)[p : p+int(strLength)])
+			*(*string)(unsafe.Add(unsafe.Pointer(out), offset)) = string((b)[p : p+int(strLength)])
 			p += int(strLength)
 			break
 		case _stringMed:
 			// string length
 			strLength := Read24FromBuffer(b, p)
 			p += 3
-			*(*string)(unsafe.Add(unsafe.Pointer(out), offset)) = string((*b)[p : p+int(strLength)])
+			*(*string)(unsafe.Add(unsafe.Pointer(out), offset)) = string((b)[p : p+int(strLength)])
 			p += int(strLength)
 			break
 		case _stringBig:
 			// string length
 			strLength := Read32FromBuffer(b, p)
 			p += 4
-			*(*string)(unsafe.Add(unsafe.Pointer(out), offset)) = string((*b)[p : p+int(strLength)])
+			*(*string)(unsafe.Add(unsafe.Pointer(out), offset)) = string((b)[p : p+int(strLength)])
 			p += int(strLength)
 			break
 		}

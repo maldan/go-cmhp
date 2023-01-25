@@ -93,6 +93,9 @@ func ReadCSV[T any](path string) ([]T, error) {
 func ReadGenericJSON[T any](path string) (T, error) {
 	s := new(T)
 	err := ReadJSON(path, &s)
+	if err != nil {
+		return *new(T), err
+	}
 	return *s, err
 }
 

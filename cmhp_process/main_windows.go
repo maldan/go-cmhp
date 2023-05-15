@@ -25,7 +25,7 @@ func Exec(args ...string) (string, error) {
 	c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	err := c.Run()
 	if err != nil {
-		return "", err
+		return b.String(), err
 	}
 	return b.String(), nil
 }

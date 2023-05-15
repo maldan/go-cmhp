@@ -24,13 +24,14 @@ func ExecWithStdIn(stdin io.Reader, args ...string) (string, error) {
 func Exec(args ...string) (string, error) {
 	c, b := exec.Command(args[0], args[1:]...), new(strings.Builder)
 	c.Stdout = b
+	c.Stderr = b
 	err := c.Run()
 	if err != nil {
-		return "", err
+		return b.String(), err
 	}
 	err = c.Process.Release()
 	if err != nil {
-		return "", err
+		return b.String(), err
 	}
 	return b.String(), nil
 }

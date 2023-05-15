@@ -77,7 +77,7 @@ func EncryptAes32[T string | []byte](data T, password string) (T, error) {
 	switch any(data).(type) {
 	case string:
 		v := gcm.Seal(nonce, nonce, []byte(data), nil)
-		return any(cmhp_convert.ToBase64(v)).(T), nil
+		return any(cmhp_convert.ToUrlBase64(v)).(T), nil
 	default:
 		v := gcm.Seal(nonce, nonce, []byte(data), nil)
 		return any(v).(T), nil
@@ -106,7 +106,7 @@ func DecryptAes32[T string | []byte](data T, password string) (T, error) {
 
 	switch any(data).(type) {
 	case string:
-		data2 := cmhp_convert.FromBase64(any(data).(string))
+		data2 := cmhp_convert.FromUrlBase64(any(data).(string))
 		nonce, ciphertext := data2[:gcm.NonceSize()], data2[gcm.NonceSize():]
 		plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 		str := string(plaintext)

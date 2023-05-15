@@ -66,7 +66,7 @@ func SyncMapToMap(sm sync.Map) map[interface{}]interface{} {
 	return m
 }
 
-func ToBase64[T string | []byte](v T) string {
+func ToUrlBase64[T string | []byte](v T) string {
 	switch any(v).(type) {
 	case string:
 		enc := b64.URLEncoding.EncodeToString([]byte(any(v).(string)))
@@ -79,7 +79,25 @@ func ToBase64[T string | []byte](v T) string {
 	}
 }
 
-func FromBase64(v string) []byte {
+func ToStdBase64[T string | []byte](v T) string {
+	switch any(v).(type) {
+	case string:
+		enc := b64.StdEncoding.EncodeToString([]byte(any(v).(string)))
+		return enc
+	case []byte:
+		enc := b64.StdEncoding.EncodeToString(any(v).([]byte))
+		return enc
+	default:
+		return ""
+	}
+}
+
+func FromUrlBase64(v string) []byte {
 	uDec, _ := b64.URLEncoding.DecodeString(v)
+	return uDec
+}
+
+func FromStdBase64(v string) []byte {
+	uDec, _ := b64.StdEncoding.DecodeString(v)
 	return uDec
 }

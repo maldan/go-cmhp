@@ -19,6 +19,7 @@ type HttpResponse struct {
 	Body       []byte `json:"body"`
 	Error      error  `json:"error"`
 	Url        string `json:"url"`
+	Headers    map[string]any
 }
 
 type HttpArgs struct {
@@ -29,7 +30,7 @@ type HttpArgs struct {
 
 	InputData  []byte
 	InputJSON  map[string]any
-	OutputJSON *map[string]any
+	OutputJSON any
 }
 
 type RequestOptions struct {
@@ -38,10 +39,11 @@ type RequestOptions struct {
 }
 
 type Response[T any] struct {
-	StatusCode int    `json:"statusCode"`
-	Body       T      `json:"body"`
-	Error      error  `json:"error"`
-	Url        string `json:"url"`
+	StatusCode  int
+	RawBody     []byte
+	GenericBody T
+	Error       error
+	Url         string
 }
 
 func Request(args HttpArgs) HttpResponse {
@@ -122,6 +124,12 @@ func Request(args HttpArgs) HttpResponse {
 	}
 
 	// Fill
+	response.Headers = make(map[string]any, 0)
+	for k, v := range resp.Header {
+		response.Headers[k] = v
+	}
+
+	// response.Headers = resp.Header.
 	response.StatusCode = resp.StatusCode
 	response.Body = body
 	response.Url = newUrl
@@ -198,7 +206,8 @@ func GetJson[T any](url string, method string, data map[string]any, opts Request
 
 	// Fill
 	response.StatusCode = resp.StatusCode
-	json.Unmarshal(body, &response.Body)
+	response.RawBody = body
+	json.Unmarshal(body, &response.GenericBody)
 
 	return response
 }

@@ -1,6 +1,7 @@
 package cmhp_print
 
 import (
+	"encoding/binary"
 	"fmt"
 	"github.com/fatih/color"
 	"reflect"
@@ -41,6 +42,7 @@ func printStruct(s interface{}, ident int, arrayIdent int, isHideType bool) {
 
 	// Print struct header
 	fmt.Print(identArr)
+
 	c := color.New(color.FgRed).Add(color.Bold)
 	c1 := color.New(color.FgCyan).Add(color.Underline)
 
@@ -125,4 +127,68 @@ func __print(val any, ident int, arrayIdent int, isHideType bool) {
 
 func Print(val interface{}) {
 	__print(val, 0, 0, false)
+}
+
+const BgRed = color.BgRed
+const BgGreen = color.BgGreen
+const BgBlue = color.BgBlue
+
+type ColorRange struct {
+	From  int
+	Len   int
+	Color color.Attribute
+}
+
+func PrintBytesColored(b []byte, lineSize int, colors []ColorRange) {
+	buff := make([]string, 0)
+	for i := 0; i < len(b); i++ {
+		c := color.New()
+		// c := color.New(color.FgRed)
+		for j := 0; j < len(colors); j++ {
+			if i >= colors[j].From && i < colors[j].From+colors[j].Len {
+				c = color.New(colors[j].Color)
+			}
+		}
+
+		buff = append(buff, c.Sprintf("%02X ", b[i]))
+		if i != 0 && (i+1)%lineSize == 0 {
+			buff = append(buff, "\n")
+		}
+	}
+	buff = append(buff, "\n")
+	fmt.Print(strings.Join(buff, ""))
+}
+
+func PrintBytes(b []byte, lineSize int) {
+	buff := make([]string, 0)
+	for i := 0; i < len(b); i++ {
+		buff = append(buff, fmt.Sprintf("%02X ", b[i]))
+		if i != 0 && (i+1)%lineSize == 0 {
+			buff = append(buff, "\n")
+		}
+	}
+	buff = append(buff, "\n")
+	fmt.Print(strings.Join(buff, ""))
+}
+
+func PrintDebugBytes(b []byte, lineBreaks ...int) {
+	o := 0
+	c := 0
+	for i := 0; i < len(b); i++ {
+		c += 1
+		fmt.Printf("%02X ", b[i])
+		if o < len(lineBreaks) && lineBreaks[o] == c {
+			if lineBreaks[o] == 4 {
+				fmt.Printf(" - %v", binary.LittleEndian.Uint32(b[i-3:]))
+			}
+			fmt.Printf("\n")
+			o += 1
+			c = 0
+		}
+
+		/*if lineBreaks[i] {
+			fmt.Printf("\n")
+		}*/
+	}
+	// fmt.Printf("%x", b)
 }

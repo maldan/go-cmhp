@@ -3,6 +3,7 @@ package cmhp_compress
 import (
 	"bytes"
 	"compress/flate"
+	"compress/gzip"
 	"io"
 )
 
@@ -43,6 +44,26 @@ func Inflate(data []byte) ([]byte, error) {
 	}
 	flateReader := flate.NewReader(inputFile)
 	defer flateReader.Close()
+
+	outputFile := new(bytes.Buffer)
+
+	io.Copy(outputFile, flateReader)
+
+	return outputFile.Bytes(), nil
+}
+
+// UnGzip Decompress data
+func UnGzip(data []byte) ([]byte, error) {
+	inputFile := new(bytes.Buffer)
+	_, err := inputFile.Write(data)
+	if err != nil {
+		return nil, err
+	}
+	flateReader, err := gzip.NewReader(inputFile)
+	defer flateReader.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	outputFile := new(bytes.Buffer)
 

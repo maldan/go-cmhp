@@ -23,7 +23,7 @@ func From24ToBuffer[T uint32 | int32](from *T, buffer *[]byte, bufferOffset int)
 	return 3
 }
 
-func From32ToBuffer[T uint32 | int32](from *T, buffer *[]byte, bufferOffset int) int {
+func From32ToBuffer[T uint32 | int32 | int](from *T, buffer *[]byte, bufferOffset int) int {
 	hh := *(*[4]byte)(unsafe.Pointer(from))
 	copy((*buffer)[bufferOffset:], hh[:])
 	return 4
